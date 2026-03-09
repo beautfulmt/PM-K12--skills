@@ -13,7 +13,6 @@
 PM工作流/
 ├── PRD模板.md                          # PRD参考模板
 ├── .agents/workflows/edu-pm-prd.md     # 完整工作流定义
-├── scripts/                            # HTML转PNG脚本
 ├── 需求文档/                            # PRD输出目录
 ├── 原型/                                # 原型输出目录
 └── 流程图/                              # 流程图输出目录
@@ -80,10 +79,10 @@ PM工作流/
 请按照工作流「步骤三」制作原型，要求：
 
 1. HTML单文件，所有页面状态通过 URL hash 切换（如 #home, #camera, #loading, #result-success, #error-unclear, #history）
-2. 技术栈：Tailwind CSS + Font Awesome（CDN引入）
-3. 手机容器尺寸：width: 320px, height: 568px
-4. <body> 只用 flex justify-center，不要 items-center 或 min-h-screen（避免上下白边）
-5. K12教育风格：圆角卡片、质感阴影、活泼配色
+2. 无 hash 打开时，默认平铺展示全部页面状态，便于直接截图和评审；带 hash 时只展示对应单页
+3. 技术栈：Tailwind CSS + Font Awesome（CDN引入）
+4. 原型容器尺寸需与实际业务端一致，课中场景优先按课堂真实比例设计，不要默认套手机竖屏
+5. <body> 无 hash 时支持多页面平铺预览；iframe 单页预览时避免上下白边
 6. 保存到 原型/[需求名]-prototype.html
 
 需要覆盖的页面状态：
@@ -126,50 +125,6 @@ PM工作流/
 4. 确保没有双重边框和上下白边
 ```
 
----
-
-## PNG 导出命令：把 HTML 直接转成可粘贴图片
-
-> **使用场景**：你现在遇到的就是这个问题。HTML 适合浏览和附件传阅，但要直接贴进钉钉/文档，通常还是 PNG 更顺手。
-
-### 1）导出单张原型图
-
-```bash
-./scripts/export-html-to-png.sh "原型/AI名师讲题-prototype.html#home" "导出PNG/AI名师讲题/home.png" --width 320 --height 568 --delay 2500
-```
-
-### 2）批量导出一个原型文件里的所有页面状态
-
-```bash
-node ./scripts/export-prototype-pngs.mjs "原型/AI名师讲题-prototype.html"
-```
-
-默认会输出到：
-
-```bash
-导出PNG/AI名师讲题/
-```
-
-### 3）导出流程图为 PNG
-
-```bash
-./scripts/export-html-to-png.sh "流程图/AI名师讲题-flow.html" "导出PNG/AI名师讲题-flow.png" --width 1400 --height 1200 --delay 4000 --full-page
-```
-
-### 4）导出 PRD 整页截图（可选）
-
-```bash
-./scripts/export-html-to-png.sh "需求文档/AI名师讲题-PRD.html" "导出PNG/AI名师讲题-PRD.png" --width 1400 --height 1600 --delay 4000 --full-page
-```
-
-> 注意：
-> - 当前样例中的原型和流程图仍使用 CDN 资源，所以导出 PNG 时最好保持联网
-> - 脚本默认调用本机 Chrome headless；如果你的 Chrome 不在默认路径，可用 `CHROME_BIN=/你的/Chrome路径` 覆盖
-> - 长页面（流程图/PRD）建议直接把 `--height` 调大到合适尺寸，确保一次截全
-> - 如果后续你想做稳定的离线导出，建议把 Tailwind / Font Awesome / Mermaid 改成内嵌或本地资源
-
----
-
 ## Prompt 6：完整一键式Prompt（高级用法）
 
 > **使用场景**：如果你想用一个Prompt跑完全流程（需要AI能力较强的模型）。
@@ -198,10 +153,10 @@ node ./scripts/export-prototype-pngs.mjs "原型/AI名师讲题-prototype.html"
 |------|----------|
 | Markdown粘贴到钉钉格式丢失 | 改用HTML格式输出，浏览器打开后截图粘贴 |
 | 原型上下有白边 | body去掉 `items-center min-h-screen`，iframe用 `border:none` |
+| 原型文件直接打开时只看到一个页面 | 调整为“无 hash 展示全部页面，带 hash 只展示对应页面” |
 | 流程图报 Syntax error | Mermaid对中文括号/引号敏感，删除报错段或简化标签文字 |
 | 表格列太窄文字挤压 | 页面max-width改为1400px，th加 `resize:horizontal`，td加 `word-break:break-word` |
 | iframe显示空白 | 检查相对路径是否正确（PRD在 `需求文档/`，原型在 `原型/`，需要 `../原型/`） |
-| 需要把原型/流程图直接贴进文档 | 用 `./scripts/export-html-to-png.sh` 或 `node ./scripts/export-prototype-pngs.mjs` 先导出 PNG |
 
 ---
 

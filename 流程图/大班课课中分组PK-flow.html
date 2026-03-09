@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>大班课课中分组PK - 流程图</title>
+    <title>大班课课中分组PK - 学生端流程图</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script type="module">
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
@@ -53,92 +53,99 @@
 
 <body>
     <div class="max-w-6xl mx-auto">
-        <div class="chart-container" id="flow-main">
-            <h2>1. 主流程时序图</h2>
-            <p class="tip">覆盖老师发起、系统分组、学生作答、积分更新、结果结算，以及断线和未作答等关键分支。</p>
+        <div class="chart-container">
+            <h2>1. 课中分组PK主流程</h2>
+            <p class="tip">本图只描述学生端体验链路；老师端仅作为触发方存在，不展开主讲端详细交互。</p>
             <pre class="mermaid">
 sequenceDiagram
-    participant T as 老师
-    participant TC as 教师端
+    participant T as 老师(触发方)
     participant S as 服务端
-    participant SC as 学生端
-    participant R as 排行榜服务
+    participant C as 学生端
+    participant R as 排行榜/结算服务
 
-    T->>TC: 选择「分组PK」
-    TC->>S: 提交PK配置(队伍数/题量/每题时长/积分规则)
-    S->>S: 校验参战人数与课堂状态
+    T->>S: 触发课堂分组PK
+    S->>S: 校验当前课堂状态、在线人数
+    S->>S: 以6人为目标组规模生成若干组
 
-    alt 可发起
-        S->>S: 自动分组或应用手动调组结果
-        S-->>TC: 返回分组预览与开始确认
-        T->>TC: 点击开始
-        TC->>S: 下发开始指令
-        S-->>SC: 推送分组结果与准备态
-        SC-->>SC: 展示队伍信息与倒计时
-
-        loop 每一题
-            S-->>SC: 下发题目、倒计时、当前队伍分数
-            par 学生作答
-                SC->>S: 提交个人答案
-            and 排行榜刷新
-                S->>R: 聚合答题结果与速度奖励
-                R-->>S: 返回队伍实时积分
-                S-->>SC: 推送单题结果与实时榜单
-                S-->>TC: 推送教师端大屏结果
-            end
-
-            alt 学生超时未提交
-                S-->>SC: 标记未作答
-            else 学生答对且最快
-                S-->>SC: 返回答对反馈(基础分+速度分+连胜分)
-            else 学生答错
-                S-->>SC: 返回答错反馈(0分)
-            end
-        end
-
-        S->>R: 汇总总分、个人贡献榜、奖励结果
-        R-->>S: 返回最终结算
-        S-->>SC: 推送胜负页、个人贡献与奖励
-        S-->>TC: 推送课堂战报
-    else 不可发起
-        S-->>TC: 返回失败原因(人数不足/课堂状态不支持)
-        TC-->>T: 提示调整后重试
+    alt 第1课/无历史数据
+        S->>S: 随机分组
+    else 第2课及以后
+        S->>S: 读取上一课正确率
+        S->>S: 按正确率分层匹配, 尽量使同层小组实力接近
     end
 
-    opt 学生网络波动
-        SC--xS: 心跳中断
-        S-->>SC: 保留15秒答题状态
-        SC->>S: 重连并拉取当前题状态
-        S-->>SC: 恢复倒计时、已作答状态与当前积分
+    S-->>C: 推送「PK开启」动画 + 组别信息
+    C-->>C: 展示3秒开场仪式
+
+    loop 覆盖课堂后续题目
+        S-->>C: 下发当前题目PK状态(题号/本组分数/当前名次)
+        C-->>C: 复用现有课堂答题页, 增加PK浮条
+        C->>S: 提交个人答案
+        S->>R: 汇总个人结果到本组总分
+        R-->>S: 返回单题组排名、总榜变化、个人贡献
+        S-->>C: 推送单题PK结果
+        C-->>C: 全屏展示3秒单题结果与榜单变化
+        C-->>C: 返回课堂, 等待下一题
+    end
+
+    alt 老师主动结束PK
+        T->>S: 结束本轮PK
+    else 课程题目结束
+        S->>S: 自动结束本轮PK
+    end
+
+    S->>R: 生成总榜、组内6人称号、奖励结果
+    R-->>S: 返回颁奖数据
+    S-->>C: 推送总榜 + 个人称号卡 + 小组称号卡
+    C-->>C: 展示颁奖仪式
+
+    opt 学生中途断线
+        C--xS: 心跳中断
+        S->>S: 保留当前题状态15秒
+        C->>S: 重新连接
+        S-->>C: 恢复当前题/单题结果/终榜状态
     end
             </pre>
         </div>
 
-        <div class="chart-container" id="flow-rule">
-            <h2>2. 计分与结算规则</h2>
-            <p class="tip">用于明确单题得分、个人贡献累计、连胜机制和异常场景下的积分处理。</p>
+        <div class="chart-container">
+            <h2>2. 分组匹配逻辑</h2>
+            <p class="tip">首课完全随机；第2课开始基于上一课正确率做同层匹配，让后续PK更公平。</p>
             <pre class="mermaid">
 flowchart TD
-    A[学生进入当前题] --> B{是否在倒计时内提交}
-    B -- 否 --> C[记为未作答]
-    B -- 是 --> D{答案是否正确}
-    D -- 否 --> E[本题个人得分0]
-    D -- 是 --> F[基础分+10]
-    F --> G{是否本队最快答对}
-    G -- 是 --> H[速度分+2]
-    G -- 否 --> I[速度分+0]
-    H --> J{是否连续2题答对}
-    I --> J
-    J -- 是 --> K[连胜分+3]
-    J -- 否 --> L[连胜分+0]
-    K --> M[累加个人贡献]
-    L --> M
-    E --> M
-    C --> M
-    M --> N[汇总到队伍总分]
-    N --> O{是否最后一题}
-    O -- 否 --> P[推送单题反馈与实时榜单]
-    O -- 是 --> Q[生成胜负结果、队内贡献榜、课堂奖励]
+    A[老师触发本轮PK] --> B{是否存在上一课正确率数据}
+    B -- 否 --> C[随机打散在线学生]
+    C --> D[按在线人数/6生成若干组]
+    B -- 是 --> E[读取每位学生上一课正确率]
+    E --> F[按正确率从高到低排序]
+    F --> G[分层匹配, 让相近正确率学生优先进入同层PK池]
+    G --> H[按6人目标组规模生成小组]
+    D --> I[输出本轮组信息]
+    H --> I
+    I --> J{是否存在尾组不足6人}
+    J -- 否 --> K[正式开场]
+    J -- 是 --> L[尾组按边界规则处理]
+    L --> K
+            </pre>
+        </div>
+
+        <div class="chart-container">
+            <h2>3. 单题结算与最终颁奖</h2>
+            <p class="tip">每题都有3秒强打断结果页；整轮结束后再展示总榜和组内6人称号卡。</p>
+            <pre class="mermaid">
+flowchart TD
+    A[学生提交答案] --> B{是否答对}
+    B -- 是 --> C[个人得分入账]
+    B -- 否 --> D[本题个人得分为0]
+    C --> E[累加到本组总分]
+    D --> E
+    E --> F[刷新单题小组榜和全程总榜]
+    F --> G[展示3秒单题结果页]
+    G --> H{是否为最后一题/老师已结束}
+    H -- 否 --> I[回到课堂继续下一题]
+    H -- 是 --> J[生成总榜Top3]
+    J --> K[生成组内6人鼓励称号]
+    K --> L[展示最终颁奖仪式]
             </pre>
         </div>
     </div>

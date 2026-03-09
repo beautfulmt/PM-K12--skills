@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>大班课课中分组PK - PRD</title>
+    <title>大班课课中分组PK（学生端）- PRD</title>
     <style>
         * {
             margin: 0;
@@ -16,7 +16,7 @@
             font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
             line-height: 1.8;
             color: #334155;
-            max-width: 1400px;
+            max-width: 1600px;
             margin: 0 auto;
             padding: 40px 24px;
             background: #fff;
@@ -90,27 +90,27 @@
 
         th:nth-child(1),
         td:nth-child(1) {
-            width: 100px;
+            width: 110px;
         }
 
         th:nth-child(2),
         td:nth-child(2) {
-            width: 110px;
+            width: 120px;
         }
 
         th:nth-child(3),
         td:nth-child(3) {
-            width: 350px;
+            width: 560px;
         }
 
         .alert {
             margin: 16px 0;
             padding: 14px 16px;
-            border-left: 4px solid #eab308;
-            background: #fefce8;
+            border-left: 4px solid #f59e0b;
+            background: #fffbeb;
             border-radius: 4px;
             font-size: 14px;
-            color: #713f12;
+            color: #92400e;
         }
 
         .meta-table td:first-child {
@@ -136,17 +136,17 @@
 </head>
 
 <body>
-    <h1>大班课课中分组PK</h1>
+    <h1>大班课课中分组PK（学生端）</h1>
 
     <h2>📋 项目信息</h2>
     <table class="meta-table">
         <tr>
             <td><strong>产品名称</strong></td>
-            <td>XX大班直播课（教师端 + 学生端）</td>
+            <td>XX 大班直播课学生端</td>
         </tr>
         <tr>
             <td><strong>需求名称</strong></td>
-            <td>大班课课中分组PK</td>
+            <td>大班课课中分组PK（学生端）</td>
         </tr>
         <tr>
             <td><strong>文档负责人</strong></td>
@@ -166,11 +166,11 @@
         </tr>
         <tr>
             <td><strong>关联文档</strong></td>
-            <td>原型 / 流程图 / 数据看板</td>
+            <td>现有课堂答题模块 / PK原型 / PK流程图</td>
         </tr>
     </table>
 
-    <div class="alert"><strong>默认业务假设：</strong>本需求面向 K12 在线大班直播课场景，教师端课中发起 PK，学生端以移动端课堂页参与；本期不包含跨班 PK、自由组队、付费道具和复杂社交关系链。</div>
+    <div class="alert"><strong>范围约束：</strong>本期只做学生端横屏课中体验，不展开主讲端详细需求。老师端仅作为“触发本轮PK / 结束本轮PK”的前置动作存在。学生端需复用现有课堂答题页，在其基础上新增 PK 开场动画、单题结果、阶段榜单、总榜与组内称号颁奖。</div>
 
     <hr>
 
@@ -187,8 +187,8 @@
         <tbody>
             <tr>
                 <td>2026-03-09</td>
-                <td>V1.0</td>
-                <td>初稿</td>
+                <td>V2.0</td>
+                <td>按“学生端横屏课中PK”重新整理</td>
                 <td>Codex</td>
             </tr>
         </tbody>
@@ -199,26 +199,25 @@
     <h2>一、需求背景</h2>
 
     <h3>1.1 现状问题</h3>
-    <p>当前大班课课中互动方式以老师提问、少量连麦、统一抢答为主，存在三个典型问题：</p>
     <ul>
-        <li><strong>参与面窄</strong>：同一时间真正参与互动的学生比例低，更多学生处于被动听课状态。</li>
-        <li><strong>课堂中段活跃度下滑</strong>：课程开始 15 分钟后，部分学生注意力下降，课堂停留和答题提交率同步走低。</li>
-        <li><strong>老师控场手段单一</strong>：老师难以快速调动全班热情，也缺少可沉淀的数据证明哪一轮互动真正有效。</li>
+        <li><strong>课中答题有参与，但缺氛围</strong>：学生虽然会跟随课堂答题，但单题答完后缺少“我和别人一起在参与”的群体反馈。</li>
+        <li><strong>整节课缺少持续性的激励线</strong>：如果只做单题答题，课堂中段容易掉状态，学生对自己每一道题的贡献感不强。</li>
+        <li><strong>只有终局榜会显得链路断裂</strong>：如果 PK 只在开始和结束时出现，中间缺少阶段性结果，学生很难持续感知比赛推进。</li>
     </ul>
 
     <h3>1.2 业务目标</h3>
-    <p>通过在课中引入「分组 PK」互动，形成“分组对抗 + 限时答题 + 实时榜单 + 结果奖励”的闭环，以提升课堂活跃度和中段留存，并为老师提供更强的控场抓手。</p>
+    <p>在大班课课中引入“分组 PK”机制，让后续课堂题目都自动纳入小组积分体系，并通过每题结束后的 3 秒结果动效和整轮结束后的颁奖仪式，形成一条覆盖整节课的鼓励式互动主线。</p>
     <ul>
-        <li>提升课中互动参与率和答题提交率</li>
-        <li>提升学生的课堂专注度和情绪价值</li>
-        <li>沉淀可评估的互动效果数据，为后续互动体系建设打基础</li>
+        <li>提升课堂答题的持续参与度</li>
+        <li>强化学生对“小组荣誉感”和“个人贡献感”的感知</li>
+        <li>让整节课中的每道题都能被组织到统一激励链路中</li>
     </ul>
 
     <h3>1.3 用户价值</h3>
     <ul>
-        <li><strong>学生</strong>：由“被点名互动”变成“全员都能参与”，通过队伍荣誉感和即时反馈提升参与意愿。</li>
-        <li><strong>老师</strong>：可以在合适时机快速拉起课堂氛围，同时通过排行榜和战报观察互动效果。</li>
-        <li><strong>家长</strong>：课后更容易感知孩子在课堂中的参与情况和课堂获得感。</li>
+        <li><strong>学生</strong>：每答一道题都会产生可见反馈，不只是“做完题”，而是“为小组加分”。</li>
+        <li><strong>老师</strong>：通过触发 PK 把后续课堂题目自动组织成更强的互动节奏。</li>
+        <li><strong>家长</strong>：更容易感知孩子在一整节课中的参与感和课堂获得感。</li>
     </ul>
 
     <hr>
@@ -236,27 +235,27 @@
         <tbody>
             <tr>
                 <td>核心目标</td>
-                <td>提升课中互动覆盖面</td>
-                <td>PK环节参与率（进入PK页 / 课堂在线人数）</td>
-                <td>≥ 75%</td>
+                <td>提升整轮PK题目的学生参与连续性</td>
+                <td>PK覆盖题目的人均提交次数</td>
+                <td>较基线 +10%</td>
             </tr>
             <tr>
                 <td>核心目标</td>
-                <td>提升有效答题提交</td>
-                <td>PK有效提交率（提交人数 / 进入PK人数）</td>
-                <td>≥ 85%</td>
+                <td>提升课中互动的仪式感和可感知度</td>
+                <td>单题结果页有效曝光率</td>
+                <td>≥ 90%</td>
             </tr>
             <tr>
                 <td>核心目标</td>
-                <td>提升课堂中段留存</td>
-                <td>PK后 10 分钟课堂停留率</td>
-                <td>较基线 +5pp</td>
+                <td>让分组更公平</td>
+                <td>后续课次对战组平均正确率差值</td>
+                <td>尽量控制在 5pp 内</td>
             </tr>
             <tr>
                 <td>次要目标</td>
-                <td>增强老师使用意愿</td>
-                <td>有发起PK的课堂占比</td>
-                <td>≥ 60%</td>
+                <td>增强正向激励</td>
+                <td>终榜页与称号页完整观看率</td>
+                <td>≥ 80%</td>
             </tr>
         </tbody>
     </table>
@@ -278,58 +277,58 @@
         <tbody>
             <tr>
                 <td>1</td>
-                <td>老师端控制</td>
-                <td>发起PK、配置题量/时长/积分规则</td>
+                <td>PK开场</td>
+                <td>分组揭晓、目标提示、3秒开场动效</td>
                 <td>P0</td>
-                <td>教师端</td>
+                <td>学生端</td>
                 <td>新增</td>
             </tr>
             <tr>
                 <td>2</td>
-                <td>分组准备</td>
-                <td>自动分组、手动调组、学生等待页</td>
+                <td>课中跟随</td>
+                <td>在现有答题页增加小组PK浮条和组分看板</td>
                 <td>P0</td>
-                <td>教师端 / 学生端</td>
+                <td>学生端</td>
                 <td>新增</td>
             </tr>
             <tr>
                 <td>3</td>
-                <td>PK作答</td>
-                <td>题目下发、限时作答、提交答案</td>
+                <td>单题结果</td>
+                <td>每道题结束后全屏展示3秒单题PK结果</td>
                 <td>P0</td>
                 <td>学生端</td>
                 <td>新增</td>
             </tr>
             <tr>
                 <td>4</td>
-                <td>实时反馈</td>
-                <td>单题反馈、队伍积分、实时排行榜</td>
+                <td>阶段榜单</td>
+                <td>中程轻榜页/单题Top榜，补齐中间反馈</td>
                 <td>P0</td>
-                <td>教师端 / 学生端</td>
+                <td>学生端</td>
                 <td>新增</td>
             </tr>
             <tr>
                 <td>5</td>
-                <td>结果结算</td>
-                <td>胜负页、个人贡献榜、奖励发放</td>
+                <td>总榜颁奖</td>
+                <td>整轮结束后展示班级小组总榜Top3</td>
                 <td>P0</td>
                 <td>学生端</td>
                 <td>新增</td>
             </tr>
             <tr>
                 <td>6</td>
-                <td>课堂沉淀</td>
-                <td>课堂战报、数据回看</td>
-                <td>P1</td>
-                <td>教师端 / 运营后台</td>
+                <td>组内称号</td>
+                <td>为组内6位学生分别颁发鼓励称号</td>
+                <td>P0</td>
+                <td>学生端</td>
                 <td>新增</td>
             </tr>
             <tr>
                 <td>7</td>
-                <td>异常处理</td>
-                <td>断线重连、未作答、发起失败兜底</td>
+                <td>异常恢复</td>
+                <td>断线重连后恢复当前题/结果/终榜状态</td>
                 <td>P0</td>
-                <td>教师端 / 学生端</td>
+                <td>学生端</td>
                 <td>新增</td>
             </tr>
         </tbody>
@@ -339,72 +338,38 @@
 
     <h2>四、流程图</h2>
 
-    <h3>4.1 主流程与异常分支</h3>
+    <h3>4.1 学生端主流程</h3>
     <iframe src="../流程图/大班课课中分组PK-flow.html"
-        style="width: 100%; height: 1200px; border: none; background: transparent;"></iframe>
+        style="width: 100%; height: 1180px; border: none; background: transparent;"></iframe>
 
-    <h3>4.2 发起前置条件</h3>
+    <h3>4.2 核心业务规则</h3>
     <table>
         <thead>
             <tr>
-                <th>检查项</th>
-                <th>规则</th>
-                <th>不满足时处理</th>
+                <th>规则项</th>
+                <th>规则描述</th>
             </tr>
         </thead>
         <tbody>
             <tr>
-                <td>课堂状态</td>
-                <td>仅在“上课中”可发起</td>
-                <td>提示“当前课堂状态暂不支持发起PK”</td>
+                <td>组规模</td>
+                <td>按在线人数 / 6 自动生成若干组，理想组规模为 6 人；尾组按边界规则处理。</td>
             </tr>
             <tr>
-                <td>在线人数</td>
-                <td>在线学生数 ≥ 20 人</td>
-                <td>提示“在线人数不足，建议稍后发起”</td>
+                <td>首课分组</td>
+                <td>无历史数据时，完全随机分组。</td>
             </tr>
             <tr>
-                <td>课堂环节冲突</td>
-                <td>与投票/点名/连麦等互斥互动不可并行</td>
-                <td>提示“请先结束当前互动环节”</td>
-            </tr>
-        </tbody>
-    </table>
-
-    <h3>4.3 计分规则</h3>
-    <table>
-        <thead>
-            <tr>
-                <th>场景</th>
-                <th>个人得分</th>
-                <th>队伍得分</th>
-                <th>说明</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>答对</td>
-                <td>+10</td>
-                <td>+10</td>
-                <td>基础分</td>
+                <td>后续课分组</td>
+                <td>读取上一课正确率，按正确率做同层匹配，让后续 PK 更公平。</td>
             </tr>
             <tr>
-                <td>本队最快答对</td>
-                <td>+2</td>
-                <td>+2</td>
-                <td>每队每题最多 1 人获得</td>
+                <td>积分口径</td>
+                <td>每个学生答对题目后，个人得分累加到本组总分；整轮以小组总分做排名。</td>
             </tr>
             <tr>
-                <td>连续 2 题答对</td>
-                <td>+3</td>
-                <td>+3</td>
-                <td>连胜奖励，按个人连续正确计算</td>
-            </tr>
-            <tr>
-                <td>答错 / 未作答</td>
-                <td>0</td>
-                <td>0</td>
-                <td>本期不做扣分，降低挫败感</td>
+                <td>结果节奏</td>
+                <td>每题结束后全屏展示 3 秒单题结果；老师结束整轮后，再展示总榜与颁奖。</td>
             </tr>
         </tbody>
     </table>
@@ -412,7 +377,6 @@
     <hr>
 
     <h2>五、详细方案</h2>
-
     <table>
         <thead>
             <tr>
@@ -424,267 +388,249 @@
         </thead>
         <tbody>
             <tr>
-                <td rowspan="2"><strong>老师端控制</strong></td>
-                <td>发起PK</td>
+                <td rowspan="2"><strong>PK开场</strong></td>
+                <td>分组揭晓</td>
                 <td>
-                    <iframe src="../原型/大班课课中分组PK-prototype.html#teacher-launch"
-                        style="width: 100%; height: 570px; border: none; background: transparent;"></iframe>
+                    <iframe src="../原型/大班课课中分组PK-prototype.html#pk-start"
+                        style="width: 100%; height: 400px; border: none; background: transparent;"></iframe>
                 </td>
                 <td>
                     <p><strong>0、功能说明</strong></p>
                     <ul>
-                        <li>老师在课中互动面板选择「分组PK」，快速发起一轮课堂互动。</li>
-                    </ul>
-                    <p><strong>1、发起页内容</strong></p>
-                    <ul>
-                        <li>配置项包含：队伍数量、题目数量、每题时长、积分规则。</li>
-                        <li>默认推荐值：2队 / 5题 / 每题15秒 / 答对+10、最快+2、连胜+3。</li>
-                        <li>显示当前在线人数和预估分组结果，帮助老师判断是否适合发起。</li>
-                    </ul>
-                    <p><strong>2、交互逻辑</strong></p>
-                    <ul>
-                        <li>老师点击开始前，服务端先校验课堂状态、在线人数、是否存在互斥互动。</li>
-                        <li>校验通过后才允许点击“开始分组PK”。</li>
-                    </ul>
-                </td>
-            </tr>
-            <tr>
-                <td>调组与规则配置</td>
-                <td>
-                    <iframe src="../原型/大班课课中分组PK-prototype.html#teacher-launch"
-                        style="width: 100%; height: 570px; border: none; background: transparent;"></iframe>
-                </td>
-                <td>
-                    <p><strong>0、分组方式</strong></p>
-                    <ul>
-                        <li>默认自动分组，按在线状态、学力分层和设备可用性尽量均衡分配。</li>
-                        <li>支持老师手动调组，但仅允许在开始前进行。</li>
-                    </ul>
-                    <p><strong>1、规则约束</strong></p>
-                    <ul>
-                        <li>本期固定 2 队，不开放多队乱斗模式。</li>
-                        <li>题目来源以老师当前课件题库或预配置互动题为主，不允许临时自由出题。</li>
-                    </ul>
-                    <p><strong>2、开始后限制</strong></p>
-                    <ul>
-                        <li>开始后不允许继续调组，避免同一轮积分口径不一致。</li>
-                        <li>如需调整，只能结束当前轮次后重新发起。</li>
-                    </ul>
-                </td>
-            </tr>
-
-            <tr>
-                <td rowspan="2"><strong>分组准备</strong></td>
-                <td>分组结果展示</td>
-                <td>
-                    <iframe src="../原型/大班课课中分组PK-prototype.html#team-lobby"
-                        style="width: 100%; height: 570px; border: none; background: transparent;"></iframe>
-                </td>
-                <td>
-                    <p><strong>0、功能说明</strong></p>
-                    <ul>
-                        <li>学生在课堂页收到分组结果后，进入等待页，明确自己所属队伍和本轮目标。</li>
-                    </ul>
-                    <p><strong>1、页面要素</strong></p>
-                    <ul>
-                        <li>展示队伍名称、队伍颜色、图标、队伍人数。</li>
-                        <li>展示倒计时、积分说明和班级奖励提示。</li>
-                    </ul>
-                    <p><strong>2、状态规则</strong></p>
-                    <ul>
-                        <li>倒计时结束自动进入答题页，无需学生手动点击。</li>
-                        <li>晚进入课堂的学生若仍在准备期，可直接补入队伍。</li>
-                    </ul>
-                </td>
-            </tr>
-            <tr>
-                <td>倒计时进场</td>
-                <td>
-                    <iframe src="../原型/大班课课中分组PK-prototype.html#team-lobby"
-                        style="width: 100%; height: 570px; border: none; background: transparent;"></iframe>
-                </td>
-                <td>
-                    <p><strong>0、倒计时策略</strong></p>
-                    <ul>
-                        <li>倒计时默认 3 秒，服务端以统一时间戳控制，避免学生端时间不一致。</li>
-                    </ul>
-                    <p><strong>1、课堂同步</strong></p>
-                    <ul>
-                        <li>教师端和学生端显示同一轮次编号、题号起始信息。</li>
-                        <li>若老师取消本轮PK，学生端退出等待页并回到课堂主界面。</li>
-                    </ul>
-                </td>
-            </tr>
-
-            <tr>
-                <td rowspan="2"><strong>PK作答</strong></td>
-                <td>题目下发与作答</td>
-                <td>
-                    <iframe src="../原型/大班课课中分组PK-prototype.html#pk-question"
-                        style="width: 100%; height: 570px; border: none; background: transparent;"></iframe>
-                </td>
-                <td>
-                    <p><strong>0、功能说明</strong></p>
-                    <ul>
-                        <li>每题为统一下发，学生在时限内独立作答，结果汇总到个人贡献和队伍积分。</li>
-                    </ul>
-                    <p><strong>1、页面元素</strong></p>
-                    <ul>
-                        <li>顶部显示双方队伍当前积分、题号和剩余时间。</li>
-                        <li>题目区支持选择题、判断题；本期不做主观题和语音题。</li>
-                        <li>底部展示个人当前贡献分，强化即时反馈。</li>
-                    </ul>
-                    <p><strong>2、交互逻辑</strong></p>
-                    <ul>
-                        <li>学生选择后点击提交；倒计时结束前可改选，提交后不可修改。</li>
-                        <li>若学生提前提交，页面进入“已提交待判定”状态。</li>
-                    </ul>
-                </td>
-            </tr>
-            <tr>
-                <td>超时未作答</td>
-                <td>
-                    <iframe src="../原型/大班课课中分组PK-prototype.html#error-network"
-                        style="width: 100%; height: 570px; border: none; background: transparent;"></iframe>
-                </td>
-                <td>
-                    <p><strong>0、触发条件</strong></p>
-                    <ul>
-                        <li>学生在规定时间内未提交，或因断线未恢复答题状态。</li>
-                    </ul>
-                    <p><strong>1、处理规则</strong></p>
-                    <ul>
-                        <li>记为未作答，不加分也不扣分。</li>
-                        <li>学生恢复在线后进入当前轮次的结果页，而不是补答上一题。</li>
-                    </ul>
-                    <p><strong>2、老师侧展示</strong></p>
-                    <ul>
-                        <li>教师端可看到每题提交人数、未作答人数，用于判断课堂网路或题目难度问题。</li>
-                    </ul>
-                </td>
-            </tr>
-
-            <tr>
-                <td rowspan="2"><strong>实时反馈</strong></td>
-                <td>单题反馈</td>
-                <td>
-                    <iframe src="../原型/大班课课中分组PK-prototype.html#answer-feedback"
-                        style="width: 100%; height: 570px; border: none; background: transparent;"></iframe>
-                </td>
-                <td>
-                    <p><strong>0、功能说明</strong></p>
-                    <ul>
-                        <li>学生提交后展示个人单题反馈，包括是否正确、获得分数、是否拿到速度奖励。</li>
-                    </ul>
-                    <p><strong>1、反馈内容</strong></p>
-                    <ul>
-                        <li>明确展示基础分、速度分、连胜分拆解，降低积分黑箱感。</li>
-                        <li>同步展示本队当前总分和个人队内排名，增强继续参与意愿。</li>
-                    </ul>
-                    <p><strong>2、限制规则</strong></p>
-                    <ul>
-                        <li>学生无法在该页返回改题，只能等待下一题或自动跳转榜单页。</li>
-                    </ul>
-                </td>
-            </tr>
-            <tr>
-                <td>实时排行榜</td>
-                <td>
-                    <iframe src="../原型/大班课课中分组PK-prototype.html#leaderboard"
-                        style="width: 100%; height: 570px; border: none; background: transparent;"></iframe>
-                </td>
-                <td>
-                    <p><strong>0、功能说明</strong></p>
-                    <ul>
-                        <li>每题结束后展示双方队伍积分变化和本队贡献榜，强化PK氛围。</li>
+                        <li>老师触发课堂 PK 后，学生端进入横屏开场页，明确本轮 PK 已正式开始。</li>
                     </ul>
                     <p><strong>1、展示内容</strong></p>
                     <ul>
-                        <li>队伍总分、队伍进度条、队内贡献榜Top3。</li>
-                        <li>显示“下一题开始倒计时”，保证节奏连续。</li>
+                        <li>显示当前所在组别、组名、组人数、PK覆盖题量、结果节奏说明。</li>
+                        <li>显示本轮目标：冲榜、全员参与、小组加分逻辑。</li>
                     </ul>
-                    <p><strong>2、同步要求</strong></p>
+                    <p><strong>2、展示时长</strong></p>
                     <ul>
-                        <li>学生端榜单和教师端大屏必须使用同一套服务端结算结果。</li>
-                        <li>若服务端正在结算，前端显示短暂 loading，不允许本地预估结果。</li>
+                        <li>默认全屏展示 3 秒后自动进入课堂题目。</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td>分组规则说明</td>
+                <td>
+                    <iframe src="../原型/大班课课中分组PK-prototype.html#pk-start"
+                        style="width: 100%; height: 400px; border: none; background: transparent;"></iframe>
+                </td>
+                <td>
+                    <p><strong>0、首课规则</strong></p>
+                    <ul>
+                        <li>第一节课无历史数据，完全随机分组。</li>
+                    </ul>
+                    <p><strong>1、后续课规则</strong></p>
+                    <ul>
+                        <li>从第二节课起，读取上一节课正确率数据做同层匹配，尽量让相近水平的小组进行PK。</li>
+                        <li>目标是让对战公平，而不是单纯随机分配。</li>
+                    </ul>
+                    <p><strong>2、边界说明</strong></p>
+                    <ul>
+                        <li>若存在尾组不足 6 人，由服务端按预设边界策略处理，不要求学生端做额外干预。</li>
                     </ul>
                 </td>
             </tr>
 
             <tr>
-                <td rowspan="2"><strong>结果结算</strong></td>
-                <td>最终结果页</td>
+                <td rowspan="2"><strong>课中跟随</strong></td>
+                <td>课堂答题浮条</td>
                 <td>
-                    <iframe src="../原型/大班课课中分组PK-prototype.html#final-result"
-                        style="width: 100%; height: 570px; border: none; background: transparent;"></iframe>
+                    <iframe src="../原型/大班课课中分组PK-prototype.html#question-follow"
+                        style="width: 100%; height: 400px; border: none; background: transparent;"></iframe>
                 </td>
                 <td>
                     <p><strong>0、功能说明</strong></p>
                     <ul>
-                        <li>全部题目结束后，向学生展示胜负结果、个人贡献与课堂奖励。</li>
+                        <li>不重做课堂答题主页面，而是在现有课堂题目页上叠加 PK 状态条和组分看板。</li>
                     </ul>
-                    <p><strong>1、页面内容</strong></p>
+                    <p><strong>1、顶部信息</strong></p>
                     <ul>
-                        <li>展示获胜队伍、队伍总分、个人贡献分、个人排名。</li>
-                        <li>展示班级奖励和个人奖励，支持继续听课或查看战报。</li>
+                        <li>显示当前 PK 状态、题目进度、本组累计总分、班级当前名次。</li>
                     </ul>
-                    <p><strong>2、战报沉淀</strong></p>
+                    <p><strong>2、右侧看板</strong></p>
                     <ul>
-                        <li>教师端课后可查看本轮战报：参与人数、平均正确率、Top贡献学生、未作答分布。</li>
+                        <li>显示本组累计总分、组内贡献Top、当前追分差距。</li>
+                    </ul>
+                    <p><strong>3、核心逻辑</strong></p>
+                    <ul>
+                        <li>学生仍按原有答题链路作答，提交后再进入单题结果页。</li>
                     </ul>
                 </td>
             </tr>
             <tr>
-                <td>奖励发放</td>
+                <td>全程覆盖</td>
                 <td>
-                    <iframe src="../原型/大班课课中分组PK-prototype.html#reward-popup"
-                        style="width: 100%; height: 570px; border: none; background: transparent;"></iframe>
+                    <iframe src="../原型/大班课课中分组PK-prototype.html#question-follow"
+                        style="width: 100%; height: 400px; border: none; background: transparent;"></iframe>
                 </td>
                 <td>
-                    <p><strong>0、奖励规则</strong></p>
+                    <p><strong>0、覆盖范围</strong></p>
                     <ul>
-                        <li>班级奖励：获胜队全员获得课堂星光值。</li>
-                        <li>个人奖励：队内 Top3 或满足特定标签（最快答题、最佳助攻）可额外获勋章。</li>
+                        <li>本轮 PK 从老师触发后开始，覆盖后续整节课中的课堂题目，直到老师主动结束或题目自然结束。</li>
                     </ul>
-                    <p><strong>1、发放时机</strong></p>
+                    <p><strong>1、节奏要求</strong></p>
                     <ul>
-                        <li>奖励结算完成后立即展示弹窗，避免学生无感知。</li>
+                        <li>学生在“答题页 → 单题结果页 → 回到课堂下一题”的节奏中循环。</li>
                     </ul>
-                    <p><strong>2、边界规则</strong></p>
+                </td>
+            </tr>
+
+            <tr>
+                <td rowspan="2"><strong>单题结果</strong></td>
+                <td>强打断结果页</td>
+                <td>
+                    <iframe src="../原型/大班课课中分组PK-prototype.html#question-result"
+                        style="width: 100%; height: 400px; border: none; background: transparent;"></iframe>
+                </td>
+                <td>
+                    <p><strong>0、功能说明</strong></p>
                     <ul>
-                        <li>若奖励接口失败，先展示“奖励发放中”，后台重试；避免前台阻塞课堂继续进行。</li>
+                        <li>每一道题结束后，学生端全屏展示 3 秒单题结果页，增强仪式感。</li>
+                    </ul>
+                    <p><strong>1、展示内容</strong></p>
+                    <ul>
+                        <li>显示个人本题是否答对、个人得分变化、本组本题得分、本组当前总分和名次变化。</li>
+                        <li>展示本题 Top3 小组，补齐中间反馈的缺失。</li>
+                    </ul>
+                    <p><strong>2、展示时长</strong></p>
+                    <ul>
+                        <li>强打断展示 3 秒，到时自动回到课堂下一题，不需要学生手动关闭。</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td>单题积分入组</td>
+                <td>
+                    <iframe src="../原型/大班课课中分组PK-prototype.html#question-result"
+                        style="width: 100%; height: 400px; border: none; background: transparent;"></iframe>
+                </td>
+                <td>
+                    <p><strong>0、积分口径</strong></p>
+                    <ul>
+                        <li>每个学生的答题得分都会累计到本组总分。</li>
+                    </ul>
+                    <p><strong>1、设计意图</strong></p>
+                    <ul>
+                        <li>强调“每个人都参与、每个人都贡献”，不是小组选代表答题。</li>
+                    </ul>
+                </td>
+            </tr>
+
+            <tr>
+                <td><strong>阶段榜单</strong></td>
+                <td>中程轻榜态</td>
+                <td>
+                    <iframe src="../原型/大班课课中分组PK-prototype.html#mid-rank"
+                        style="width: 100%; height: 400px; border: none; background: transparent;"></iframe>
+                </td>
+                <td>
+                    <p><strong>0、功能说明</strong></p>
+                    <ul>
+                        <li>除单题结果页外，在关键节点还可展示轻量化中程榜单页，帮助学生感知整轮进度。</li>
+                    </ul>
+                    <p><strong>1、展示内容</strong></p>
+                    <ul>
+                        <li>班级Top榜、本组累计分、本组当前名次和追分差距。</li>
+                    </ul>
+                    <p><strong>2、展示时长</strong></p>
+                    <ul>
+                        <li>该页同样为短停留态，可自动消失，不打乱课堂下一题节奏。</li>
+                    </ul>
+                </td>
+            </tr>
+
+            <tr>
+                <td rowspan="2"><strong>总榜颁奖</strong></td>
+                <td>班级小组总榜</td>
+                <td>
+                    <iframe src="../原型/大班课课中分组PK-prototype.html#final-podium"
+                        style="width: 100%; height: 400px; border: none; background: transparent;"></iframe>
+                </td>
+                <td>
+                    <p><strong>0、功能说明</strong></p>
+                    <ul>
+                        <li>老师结束本轮 PK 后，学生端展示全班小组总榜，至少给出第1、2、3名。</li>
+                    </ul>
+                    <p><strong>1、展示内容</strong></p>
+                    <ul>
+                        <li>展示班级 Top3 小组、本组最终名次、本组总分、我的个人贡献分。</li>
+                    </ul>
+                    <p><strong>2、结果定位</strong></p>
+                    <ul>
+                        <li>这是一轮完整 PK 的终局页，区别于每题的阶段结果页。</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td>结束触发</td>
+                <td>
+                    <iframe src="../原型/大班课课中分组PK-prototype.html#final-podium"
+                        style="width: 100%; height: 400px; border: none; background: transparent;"></iframe>
+                </td>
+                <td>
+                    <p><strong>0、结束条件</strong></p>
+                    <ul>
+                        <li>老师主动结束本轮 PK，或整轮覆盖题目全部结束。</li>
+                    </ul>
+                    <p><strong>1、学生端表现</strong></p>
+                    <ul>
+                        <li>结束后不再展示“下一题PK”链路，而是进入总榜和颁奖链路。</li>
+                    </ul>
+                </td>
+            </tr>
+
+            <tr>
+                <td><strong>组内称号</strong></td>
+                <td>6人鼓励称号</td>
+                <td>
+                    <iframe src="../原型/大班课课中分组PK-prototype.html#title-awards"
+                        style="width: 100%; height: 400px; border: none; background: transparent;"></iframe>
+                </td>
+                <td>
+                    <p><strong>0、功能说明</strong></p>
+                    <ul>
+                        <li>因为每组固定为 6 人，终局时为组内 6 位学生各发一个称号，强化鼓励式教育。</li>
+                    </ul>
+                    <p><strong>1、称号示例</strong></p>
+                    <ul>
+                        <li>MVP、最快答题王、稳定输出王、最佳进步奖、团队助攻王、坚持闪耀星。</li>
+                    </ul>
+                    <p><strong>2、设计原则</strong></p>
+                    <ul>
+                        <li>尽量做到每个学生都有自己的高光，不让称号只集中在少数高分学生身上。</li>
                     </ul>
                 </td>
             </tr>
 
             <tr>
                 <td><strong>异常处理</strong></td>
-                <td>网络重连</td>
+                <td>断线重连</td>
                 <td>
                     <iframe src="../原型/大班课课中分组PK-prototype.html#error-network"
-                        style="width: 100%; height: 570px; border: none; background: transparent;"></iframe>
+                        style="width: 100%; height: 400px; border: none; background: transparent;"></iframe>
                 </td>
                 <td>
                     <p><strong>0、功能说明</strong></p>
                     <ul>
-                        <li>课中PK对时效敏感，断线重连必须保证状态恢复而不是直接踢出课堂。</li>
+                        <li>学生在课中断线后，需要恢复到正确的 PK 状态，而不是简单返回课堂首页。</li>
                     </ul>
-                    <p><strong>1、恢复逻辑</strong></p>
+                    <p><strong>1、恢复策略</strong></p>
                     <ul>
-                        <li>服务端保留 15 秒答题状态缓存，包括当前题号、剩余时间、是否已提交。</li>
-                        <li>学生恢复连接后自动拉取最新状态并继续答题或进入结果页。</li>
+                        <li>服务端保留当前题状态 15 秒。</li>
+                        <li>若已提交，恢复后进入本题结果页；若未提交，则恢复剩余倒计时。</li>
                     </ul>
-                    <p><strong>2、积分一致性</strong></p>
+                    <p><strong>2、超时处理</strong></p>
                     <ul>
-                        <li>若已提交答案，重连后只展示结果，不重复计分。</li>
-                        <li>若未提交且已超时，则按未作答处理。</li>
+                        <li>超出恢复窗口后，本题按未作答处理，但学生仍可继续参与后续题目和终局颁奖。</li>
                     </ul>
                 </td>
             </tr>
         </tbody>
     </table>
 
-    <div class="alert"><strong>⚠️ 关键规则：</strong>本期采用“只奖励不扣分”的计分策略，降低学生参与门槛；所有榜单与结算结果以服务端聚合结果为准，前端不做本地预估排名。</div>
+    <div class="alert"><strong>关键设计原则：</strong>这不是单道题的临时活动，而是一条贯穿整节课后续题目的互动主线。学生端核心体验必须做到“题题有反馈、过程有阶段榜、结束有仪式感、每个人都有称号”。</div>
 
     <hr>
 
@@ -701,39 +647,33 @@
         <tbody>
             <tr>
                 <td>1</td>
-                <td>在线人数不足</td>
-                <td>教师端不允许发起，提示稍后重试</td>
-                <td>可引导老师改用普通抢答或投票互动</td>
+                <td>在线人数不足，无法按6人完整成组</td>
+                <td>服务端按边界规则处理尾组，学生端只展示最终组结果</td>
+                <td>不把复杂分组逻辑暴露给学生</td>
             </tr>
             <tr>
                 <td>2</td>
-                <td>学生网络断连</td>
-                <td>保留15秒状态，恢复后自动回到当前题</td>
-                <td>超时未恢复按未作答处理</td>
+                <td>学生中途断线</td>
+                <td>保留15秒状态，恢复后回到正确的题目/结果/终榜状态</td>
+                <td>超时按未作答处理</td>
             </tr>
             <tr>
                 <td>3</td>
-                <td>服务端结算超时</td>
-                <td>前端展示“结果计算中”，禁止进入下一题</td>
-                <td>超时超过5秒，老师端可手动跳过本题</td>
+                <td>单题结果接口延迟</td>
+                <td>展示“结果计算中”loading，短暂阻塞返回课堂</td>
+                <td>超过阈值则直接回课堂，并在下一题前补发榜单</td>
             </tr>
             <tr>
                 <td>4</td>
-                <td>奖励发放失败</td>
-                <td>前端提示“奖励稍后到账”</td>
-                <td>后台任务补发，保留日志</td>
+                <td>老师中途结束PK</td>
+                <td>学生端立即终止后续单题结果链路，直接进入总榜页</td>
+                <td>已完成的题目结果继续计入总榜</td>
             </tr>
             <tr>
                 <td>5</td>
-                <td>课堂被老师提前结束</td>
-                <td>本轮PK立即终止，学生端返回课堂主界面</td>
-                <td>已产生的结果不展示奖励弹窗</td>
-            </tr>
-            <tr>
-                <td>6</td>
-                <td>题目资源缺失</td>
-                <td>老师端提示题目加载失败，禁止开始本轮</td>
-                <td>回退到上一套可用互动题</td>
+                <td>奖励/称号计算失败</td>
+                <td>先展示总榜，称号页延迟补发</td>
+                <td>显示“称号生成中”，后台重试</td>
             </tr>
         </tbody>
     </table>
@@ -758,80 +698,80 @@
         <tbody>
             <tr>
                 <td>1</td>
-                <td>pk_launch_click</td>
-                <td>老师点击“开始分组PK”</td>
-                <td>教师端控制台</td>
-                <td>点击</td>
-                <td>teamCount, questionCount, duration</td>
-                <td>int, int, int</td>
-                <td>队伍数/题量/每题时长</td>
-                <td>用于统计老师使用习惯</td>
+                <td>pk_start_show</td>
+                <td>学生端展示PK开场页</td>
+                <td>学生端</td>
+                <td>曝光</td>
+                <td>groupId, groupMemberCount, lessonPhase</td>
+                <td>string, int, string</td>
+                <td>组ID/组人数/课次阶段</td>
+                <td>用于统计开场触达率</td>
             </tr>
             <tr>
                 <td>2</td>
-                <td>pk_group_result_show</td>
-                <td>学生进入分组等待页</td>
+                <td>pk_follow_show</td>
+                <td>答题页显示PK浮条</td>
                 <td>学生端</td>
                 <td>曝光</td>
-                <td>teamId, teamName, memberCount</td>
-                <td>string, string, int</td>
-                <td>队伍标识/队名/人数</td>
-                <td>用于统计分组覆盖率</td>
+                <td>questionId, roundNo, groupRank</td>
+                <td>string, int, int</td>
+                <td>题目ID/题序/当前名次</td>
+                <td>用于统计课堂跟随覆盖率</td>
             </tr>
             <tr>
                 <td>3</td>
-                <td>pk_question_show</td>
-                <td>每题下发成功</td>
-                <td>学生端</td>
-                <td>曝光</td>
-                <td>roundNo, questionId, questionType</td>
-                <td>int, string, string</td>
-                <td>轮次/题目ID/题型</td>
-                <td>用于题目到达率监控</td>
-            </tr>
-            <tr>
-                <td>4</td>
                 <td>pk_answer_submit</td>
                 <td>学生提交答案</td>
                 <td>学生端</td>
                 <td>点击</td>
-                <td>questionId, answer, submitMs</td>
-                <td>string, string, int</td>
-                <td>题目ID/答案/提交耗时</td>
-                <td>用于正确率与速度分析</td>
+                <td>questionId, isCorrect, submitMs, personalScore</td>
+                <td>string, bool, int, int</td>
+                <td>题目ID/是否正确/耗时/个人得分</td>
+                <td>用于贡献与速度分析</td>
+            </tr>
+            <tr>
+                <td>4</td>
+                <td>pk_question_result_show</td>
+                <td>单题结果页展示</td>
+                <td>学生端</td>
+                <td>曝光</td>
+                <td>questionId, groupScore, groupRank</td>
+                <td>string, int, int</td>
+                <td>题目ID/组分/组名次</td>
+                <td>用于统计阶段反馈触达率</td>
             </tr>
             <tr>
                 <td>5</td>
-                <td>pk_feedback_show</td>
-                <td>单题反馈页展示</td>
+                <td>pk_mid_rank_show</td>
+                <td>阶段榜单页展示</td>
                 <td>学生端</td>
                 <td>曝光</td>
-                <td>isCorrect, score, speedBonus</td>
-                <td>bool, int, int</td>
-                <td>是否正确/本题得分/速度奖励</td>
-                <td>用于分析激励效果</td>
+                <td>roundNo, myGroupRank, myGroupScore</td>
+                <td>int, int, int</td>
+                <td>题序/名次/组分</td>
+                <td>用于判断中程反馈是否有效</td>
             </tr>
             <tr>
                 <td>6</td>
-                <td>pk_leaderboard_show</td>
-                <td>排行榜页展示</td>
-                <td>学生端 / 教师端</td>
+                <td>pk_final_rank_show</td>
+                <td>总榜页展示</td>
+                <td>学生端</td>
                 <td>曝光</td>
-                <td>roundNo, myTeamScore, rivalTeamScore</td>
+                <td>finalRank, finalScore, contributionScore</td>
                 <td>int, int, int</td>
-                <td>轮次/我方分数/对方分数</td>
-                <td>用于统计榜单触达</td>
+                <td>最终名次/组总分/个人贡献</td>
+                <td>用于终局分析</td>
             </tr>
             <tr>
                 <td>7</td>
-                <td>pk_final_result_show</td>
-                <td>最终结果页展示</td>
+                <td>pk_title_award_show</td>
+                <td>组内称号页展示</td>
                 <td>学生端</td>
                 <td>曝光</td>
-                <td>teamRank, contributionScore, rewardFlag</td>
-                <td>int, int, bool</td>
-                <td>队伍排名/个人贡献/是否得奖</td>
-                <td>用于统计正反馈效果</td>
+                <td>myTitle, groupId</td>
+                <td>string, string</td>
+                <td>我的称号/组ID</td>
+                <td>用于评估鼓励机制</td>
             </tr>
             <tr>
                 <td>8</td>
@@ -839,15 +779,15 @@
                 <td>断线重连结束</td>
                 <td>学生端</td>
                 <td>曝光</td>
-                <td>recoverStatus, questionId</td>
+                <td>recoverStatus, currentStep</td>
                 <td>string, string</td>
-                <td>恢复成功/失败/超时、题目ID</td>
-                <td>用于排查网络问题</td>
+                <td>恢复成功/失败、恢复到的链路节点</td>
+                <td>用于排查课中稳定性</td>
             </tr>
         </tbody>
     </table>
 
-    <p><strong>通用参数说明：</strong><code>courseId</code> 课程ID、<code>lessonId</code> 课次ID、<code>grade_q</code> 年级、<code>classroomId</code> 课堂ID、<code>studentId</code> 学生ID，会随每个埋点默认上报。</p>
+    <p><strong>通用参数：</strong><code>courseId</code>、<code>lessonId</code>、<code>classroomId</code>、<code>studentId</code>、<code>grade_q</code> 会作为默认公共参数透传。</p>
 
     <hr>
 
@@ -867,29 +807,29 @@
             <tr>
                 <td>灰度1期</td>
                 <td>待定</td>
-                <td>5% 课次 + 指定老师白名单</td>
-                <td>发起成功率、题目到达率、崩溃率</td>
+                <td>指定班级白名单</td>
+                <td>开场触达率、单题结果曝光率、崩溃率</td>
             </tr>
             <tr>
                 <td>灰度2期</td>
                 <td>待定</td>
-                <td>30% 课次</td>
-                <td>参与率、提交率、重连成功率</td>
+                <td>20% 课次</td>
+                <td>提交次数、单题结果完整率、重连成功率</td>
             </tr>
             <tr>
                 <td>全量发布</td>
                 <td>待定</td>
-                <td>100% 支持班级</td>
-                <td>中段留存提升、老师发起率</td>
+                <td>100% 目标班级</td>
+                <td>参与率、中程反馈有效性、称号页完成率</td>
             </tr>
         </tbody>
     </table>
 
     <h3>8.2 回滚方案</h3>
     <ul>
-        <li>若课堂稳定性指标异常，可通过配置中心关闭「分组PK」入口，恢复到普通课堂互动。</li>
-        <li>若仅结算链路异常，可关闭奖励发放和排行榜展示，仅保留基础答题互动。</li>
-        <li>所有奖励发放须保证幂等，回滚时不影响已发放奖励数据。</li>
+        <li>若课堂稳定性异常，可关闭 PK 开场与结果页，仅保留原有答题流程。</li>
+        <li>若终局称号链路异常，可只关闭称号页，保留总榜页。</li>
+        <li>若同层匹配数据异常，可回退到全量随机分组策略。</li>
     </ul>
 
     <hr>
@@ -898,7 +838,7 @@
     <ul>
         <li>原型文件：<code>../原型/大班课课中分组PK-prototype.html</code></li>
         <li>流程图文件：<code>../流程图/大班课课中分组PK-flow.html</code></li>
-        <li>本期暂不覆盖：跨班PK、自由组队、多人语音连麦PK、付费道具化玩法</li>
+        <li>本期不含：主讲端交互、跨班PK、家长端同步、课后复盘页</li>
     </ul>
 </body>
 
