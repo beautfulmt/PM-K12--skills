@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>大班课课中分组PK - 流程图</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { useMaxWidth: false, htmlLabels: true, curve: 'basis' }
+        });
+    </script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+            background: linear-gradient(180deg, #eff6ff 0%, #f8fafc 100%);
+            margin: 0;
+            padding: 20px;
+            color: #0f172a;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 18px;
+            box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+            padding: 24px;
+            margin-bottom: 24px;
+            overflow-x: auto;
+            border: 1px solid #e2e8f0;
+        }
+
+        h2 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            padding-left: 12px;
+            border-left: 4px solid #2563eb;
+        }
+
+        p.tip {
+            margin: 0 0 16px;
+            color: #64748b;
+            font-size: 13px;
+            line-height: 1.7;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="max-w-6xl mx-auto">
+        <div class="chart-container" id="flow-main">
+            <h2>1. 主流程时序图</h2>
+            <p class="tip">覆盖老师发起、系统分组、学生作答、积分更新、结果结算，以及断线和未作答等关键分支。</p>
+            <pre class="mermaid">
+sequenceDiagram
+    participant T as 老师
+    participant TC as 教师端
+    participant S as 服务端
+    participant SC as 学生端
+    participant R as 排行榜服务
+
+    T->>TC: 选择「分组PK」
+    TC->>S: 提交PK配置(队伍数/题量/每题时长/积分规则)
+    S->>S: 校验参战人数与课堂状态
+
+    alt 可发起
+        S->>S: 自动分组或应用手动调组结果
+        S-->>TC: 返回分组预览与开始确认
+        T->>TC: 点击开始
+        TC->>S: 下发开始指令
+        S-->>SC: 推送分组结果与准备态
+        SC-->>SC: 展示队伍信息与倒计时
+
+        loop 每一题
+            S-->>SC: 下发题目、倒计时、当前队伍分数
+            par 学生作答
+                SC->>S: 提交个人答案
+            and 排行榜刷新
+                S->>R: 聚合答题结果与速度奖励
+                R-->>S: 返回队伍实时积分
+                S-->>SC: 推送单题结果与实时榜单
+                S-->>TC: 推送教师端大屏结果
+            end
+
+            alt 学生超时未提交
+                S-->>SC: 标记未作答
+            else 学生答对且最快
+                S-->>SC: 返回答对反馈(基础分+速度分+连胜分)
+            else 学生答错
+                S-->>SC: 返回答错反馈(0分)
+            end
+        end
+
+        S->>R: 汇总总分、个人贡献榜、奖励结果
+        R-->>S: 返回最终结算
+        S-->>SC: 推送胜负页、个人贡献与奖励
+        S-->>TC: 推送课堂战报
+    else 不可发起
+        S-->>TC: 返回失败原因(人数不足/课堂状态不支持)
+        TC-->>T: 提示调整后重试
+    end
+
+    opt 学生网络波动
+        SC--xS: 心跳中断
+        S-->>SC: 保留15秒答题状态
+        SC->>S: 重连并拉取当前题状态
+        S-->>SC: 恢复倒计时、已作答状态与当前积分
+    end
+            </pre>
+        </div>
+
+        <div class="chart-container" id="flow-rule">
+            <h2>2. 计分与结算规则</h2>
+            <p class="tip">用于明确单题得分、个人贡献累计、连胜机制和异常场景下的积分处理。</p>
+            <pre class="mermaid">
+flowchart TD
+    A[学生进入当前题] --> B{是否在倒计时内提交}
+    B -- 否 --> C[记为未作答]
+    B -- 是 --> D{答案是否正确}
+    D -- 否 --> E[本题个人得分0]
+    D -- 是 --> F[基础分+10]
+    F --> G{是否本队最快答对}
+    G -- 是 --> H[速度分+2]
+    G -- 否 --> I[速度分+0]
+    H --> J{是否连续2题答对}
+    I --> J
+    J -- 是 --> K[连胜分+3]
+    J -- 否 --> L[连胜分+0]
+    K --> M[累加个人贡献]
+    L --> M
+    E --> M
+    C --> M
+    M --> N[汇总到队伍总分]
+    N --> O{是否最后一题}
+    O -- 否 --> P[推送单题反馈与实时榜单]
+    O -- 是 --> Q[生成胜负结果、队内贡献榜、课堂奖励]
+            </pre>
+        </div>
+    </div>
+</body>
+
+</html>

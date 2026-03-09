@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>大班课课中分组PK - 原型</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: transparent;
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .device {
+            width: 100%;
+            max-width: 320px;
+            height: 568px;
+            background: #f8fafc;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+            margin: 0 auto;
+            display: none;
+            flex-direction: column;
+        }
+
+        .device.active {
+            display: flex;
+        }
+
+        .status-bar {
+            height: 24px;
+            background: transparent;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 16px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #0f172a;
+            margin-top: 8px;
+        }
+
+        .option-card {
+            transition: all 0.2s ease;
+        }
+
+        .option-card.active {
+            border-color: #2563eb;
+            background: #eff6ff;
+            box-shadow: 0 10px 20px rgba(37, 99, 235, 0.08);
+        }
+
+        .bg-grid {
+            background-image:
+                radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.7) 0 18%, transparent 18% 100%),
+                radial-gradient(circle at 80% 10%, rgba(255, 255, 255, 0.5) 0 12%, transparent 12% 100%),
+                linear-gradient(180deg, #eff6ff 0%, #f8fafc 100%);
+            background-size: 180px 180px, 220px 220px, 100% 100%;
+        }
+
+        ::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+
+<body class="flex justify-center">
+
+    <div id="teacher-launch" class="device bg-grid">
+        <div class="status-bar"><span>9:41</span><span><i class="fa-solid fa-signal"></i> <i
+                    class="fa-solid fa-wifi"></i> <i class="fa-solid fa-battery-full"></i></span></div>
+        <div class="px-4 pt-2 pb-3 flex items-center justify-between">
+            <div>
+                <div class="text-xs text-slate-500">大班课课堂控制台</div>
+                <h1 class="text-lg font-bold text-slate-900 mt-1">发起分组 PK</h1>
+            </div>
+            <div class="w-10 h-10 rounded-2xl bg-white shadow-sm flex items-center justify-center text-amber-500">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+        </div>
+        <div class="px-4 space-y-3 overflow-y-auto pb-6">
+            <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100">
+                <div class="flex items-center justify-between">
+                    <div class="text-sm font-semibold text-slate-800">分组方式</div>
+                    <span class="text-[11px] px-2 py-1 rounded-full bg-blue-50 text-blue-600">推荐自动分组</span>
+                </div>
+                <div class="mt-3 grid grid-cols-2 gap-2 text-sm">
+                    <div class="rounded-2xl border-2 border-blue-500 bg-blue-50 p-3">
+                        <div class="font-semibold text-blue-700">自动分组</div>
+                        <div class="text-xs text-slate-500 mt-1">按在线状态和学力均衡分配</div>
+                    </div>
+                    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                        <div class="font-semibold text-slate-700">手动调组</div>
+                        <div class="text-xs text-slate-500 mt-1">老师可拖拽调换学生</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100">
+                <div class="text-sm font-semibold text-slate-800">PK规则</div>
+                <div class="grid grid-cols-2 gap-2 mt-3">
+                    <div class="rounded-2xl bg-orange-50 p-3">
+                        <div class="text-xs text-orange-500">队伍数量</div>
+                        <div class="text-xl font-bold text-slate-900 mt-1">2 队</div>
+                    </div>
+                    <div class="rounded-2xl bg-emerald-50 p-3">
+                        <div class="text-xs text-emerald-500">题目数量</div>
+                        <div class="text-xl font-bold text-slate-900 mt-1">5 题</div>
+                    </div>
+                    <div class="rounded-2xl bg-blue-50 p-3">
+                        <div class="text-xs text-blue-500">每题时长</div>
+                        <div class="text-xl font-bold text-slate-900 mt-1">15 秒</div>
+                    </div>
+                    <div class="rounded-2xl bg-violet-50 p-3">
+                        <div class="text-xs text-violet-500">积分规则</div>
+                        <div class="text-sm font-bold text-slate-900 mt-1">答对 +10<br>最快 +2</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 rounded-3xl p-4 text-white shadow-lg">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-xs text-slate-400">预估参战人数</div>
+                        <div class="text-2xl font-bold mt-1">86 人</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-xs text-slate-400">可发起条件</div>
+                        <div class="text-sm font-semibold text-emerald-300 mt-1">已满足</div>
+                    </div>
+                </div>
+                <div class="mt-4 flex gap-2">
+                    <div class="flex-1 rounded-2xl bg-white/10 px-3 py-2">
+                        <div class="text-[11px] text-rose-200">红队</div>
+                        <div class="text-sm font-semibold mt-1">43 人</div>
+                    </div>
+                    <div class="flex-1 rounded-2xl bg-white/10 px-3 py-2">
+                        <div class="text-[11px] text-blue-200">蓝队</div>
+                        <div class="text-sm font-semibold mt-1">43 人</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="px-4 pb-6 mt-auto">
+            <button
+                class="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl shadow-lg shadow-slate-300 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-bolt"></i> 开始分组 PK
+            </button>
+        </div>
+    </div>
+
+    <div id="team-lobby" class="device bg-gradient-to-br from-blue-100 via-white to-orange-50">
+        <div class="status-bar"><span>9:41</span><span><i class="fa-solid fa-wifi"></i> <i
+                    class="fa-solid fa-battery-full"></i></span></div>
+        <div class="px-4 pt-1">
+            <div class="text-center text-xs font-semibold text-slate-500">课中互动 · 第 2 环节</div>
+            <h1 class="text-center text-xl font-bold text-slate-900 mt-1">分组 PK 即将开始</h1>
+        </div>
+        <div class="px-4 mt-4">
+            <div class="bg-white rounded-[28px] p-5 shadow-lg border border-white/60">
+                <div class="text-center text-xs text-slate-500">你已加入队伍</div>
+                <div class="mt-3 rounded-[24px] bg-gradient-to-r from-blue-500 to-cyan-400 text-white p-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="text-xs text-blue-100">第 2 组</div>
+                            <div class="text-2xl font-bold mt-1">闪电蓝队</div>
+                        </div>
+                        <div class="w-14 h-14 rounded-3xl bg-white/20 flex items-center justify-center text-2xl">
+                            <i class="fa-solid fa-bolt-lightning"></i>
+                        </div>
+                    </div>
+                    <div class="mt-4 grid grid-cols-2 gap-2 text-xs">
+                        <div class="rounded-2xl bg-white/15 px-3 py-2">
+                            <div class="text-blue-100">队伍人数</div>
+                            <div class="text-lg font-bold mt-1">43 人</div>
+                        </div>
+                        <div class="rounded-2xl bg-white/15 px-3 py-2">
+                            <div class="text-blue-100">目标</div>
+                            <div class="text-lg font-bold mt-1">冲击第一</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-5 text-center">
+                    <div class="text-sm text-slate-500">老师正在同步分组结果</div>
+                    <div
+                        class="w-24 h-24 rounded-full bg-orange-50 border-8 border-orange-100 mx-auto mt-4 flex items-center justify-center text-4xl font-black text-orange-500">
+                        03
+                    </div>
+                    <div class="text-xs text-slate-400 mt-3">倒计时结束后自动进入答题页</div>
+                </div>
+            </div>
+        </div>
+        <div class="px-4 mt-auto pb-6">
+            <div class="bg-slate-900 text-white rounded-3xl p-4">
+                <div class="flex items-center justify-between text-sm">
+                    <span>积分说明</span>
+                    <span class="text-amber-300">答对 +10 / 最快 +2</span>
+                </div>
+                <div class="mt-3 h-2 rounded-full bg-white/10 overflow-hidden">
+                    <div class="w-3/4 h-full bg-gradient-to-r from-orange-400 to-amber-300 rounded-full"></div>
+                </div>
+                <div class="text-xs text-slate-300 mt-2">全员参与即可解锁班级徽章奖励</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="pk-question" class="device bg-slate-50">
+        <div class="status-bar bg-white"><span>9:41</span><span><i class="fa-solid fa-battery-full"></i></span></div>
+        <div class="px-4 pt-2 pb-3 bg-white border-b border-slate-100">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="px-2 py-1 rounded-full bg-rose-50 text-rose-500 text-[11px] font-semibold">红队 38</span>
+                    <span class="text-xs text-slate-400">VS</span>
+                    <span class="px-2 py-1 rounded-full bg-blue-50 text-blue-500 text-[11px] font-semibold">蓝队 42</span>
+                </div>
+                <div class="px-3 py-1 rounded-full bg-amber-50 text-amber-600 text-xs font-bold">00:12</div>
+            </div>
+            <div class="mt-2 flex items-center justify-between text-xs text-slate-500">
+                <span>第 3 / 5 题</span>
+                <span>最快答对可额外 +2 分</span>
+            </div>
+        </div>
+        <div class="flex-1 overflow-y-auto px-4 py-4">
+            <div class="rounded-[28px] bg-white p-5 shadow-sm border border-slate-100">
+                <div class="flex items-center justify-between">
+                    <span class="px-2 py-1 rounded-full bg-indigo-50 text-indigo-500 text-[11px] font-semibold">数学 · 单选题</span>
+                    <span class="text-xs text-slate-400">全班作答中</span>
+                </div>
+                <h2 class="text-xl font-bold text-slate-900 leading-9 mt-4">
+                    已知 24 ÷ 6 = 4，那么 240 ÷ 6 = ?
+                </h2>
+                <div class="mt-5 space-y-3 text-sm">
+                    <div class="option-card active rounded-2xl border-2 p-4">
+                        <div class="flex items-center gap-3">
+                            <span
+                                class="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold">A</span>
+                            <span class="font-semibold text-slate-800">40</span>
+                        </div>
+                    </div>
+                    <div class="option-card rounded-2xl border border-slate-200 bg-white p-4">
+                        <div class="flex items-center gap-3">
+                            <span
+                                class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center font-bold">B</span>
+                            <span class="font-semibold text-slate-700">24</span>
+                        </div>
+                    </div>
+                    <div class="option-card rounded-2xl border border-slate-200 bg-white p-4">
+                        <div class="flex items-center gap-3">
+                            <span
+                                class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center font-bold">C</span>
+                            <span class="font-semibold text-slate-700">4</span>
+                        </div>
+                    </div>
+                    <div class="option-card rounded-2xl border border-slate-200 bg-white p-4">
+                        <div class="flex items-center gap-3">
+                            <span
+                                class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center font-bold">D</span>
+                            <span class="font-semibold text-slate-700">46</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 rounded-3xl bg-slate-900 text-white p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-xs text-slate-400">我的状态</div>
+                        <div class="text-sm font-semibold mt-1">已选 A，待提交</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-xs text-slate-400">个人贡献</div>
+                        <div class="text-lg font-bold mt-1">12 分</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="px-4 pb-6">
+            <button
+                class="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-blue-200 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-paper-plane"></i> 提交答案
+            </button>
+        </div>
+    </div>
+
+    <div id="answer-feedback" class="device bg-gradient-to-br from-emerald-50 via-white to-blue-50">
+        <div class="status-bar"><span>9:41</span><span><i class="fa-solid fa-battery-full"></i></span></div>
+        <div class="flex-1 flex flex-col items-center justify-center px-6">
+            <div
+                class="w-24 h-24 rounded-full bg-emerald-500 text-white flex items-center justify-center text-4xl shadow-lg shadow-emerald-200">
+                <i class="fa-solid fa-check"></i>
+            </div>
+            <h1 class="text-2xl font-black text-slate-900 mt-5">回答正确！</h1>
+            <p class="text-sm text-slate-500 mt-2 text-center">你为蓝队拿下了本题积分，并获得最快答题奖励</p>
+
+            <div class="w-full mt-6 bg-white rounded-[28px] p-5 shadow-sm border border-slate-100">
+                <div class="grid grid-cols-3 gap-3 text-center">
+                    <div class="rounded-2xl bg-blue-50 p-3">
+                        <div class="text-[11px] text-blue-500">基础分</div>
+                        <div class="text-xl font-black text-slate-900 mt-1">+10</div>
+                    </div>
+                    <div class="rounded-2xl bg-amber-50 p-3">
+                        <div class="text-[11px] text-amber-500">最快奖励</div>
+                        <div class="text-xl font-black text-slate-900 mt-1">+2</div>
+                    </div>
+                    <div class="rounded-2xl bg-emerald-50 p-3">
+                        <div class="text-[11px] text-emerald-500">连胜加成</div>
+                        <div class="text-xl font-black text-slate-900 mt-1">+3</div>
+                    </div>
+                </div>
+                <div class="mt-5 rounded-2xl bg-slate-900 p-4 text-white">
+                    <div class="flex items-center justify-between text-sm">
+                        <span>蓝队当前总分</span>
+                        <span class="text-xl font-black">57</span>
+                    </div>
+                    <div class="mt-2 text-xs text-slate-400">你当前位列队内第 2 名，继续保持</div>
+                </div>
+            </div>
+        </div>
+        <div class="px-4 pb-6">
+            <button class="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl">等待下一题</button>
+        </div>
+    </div>
+
+    <div id="leaderboard" class="device bg-slate-950 text-white">
+        <div class="status-bar text-white"><span>9:41</span><span><i class="fa-solid fa-battery-full"></i></span></div>
+        <div class="px-4 pt-1">
+            <div class="text-center text-xs text-slate-400">第 3 题结束</div>
+            <h1 class="text-center text-2xl font-black mt-1">实时排行榜</h1>
+        </div>
+        <div class="px-4 mt-5 space-y-4">
+            <div class="rounded-[28px] bg-white/8 backdrop-blur p-4 border border-white/10">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-blue-500 flex items-center justify-center">
+                            <i class="fa-solid fa-bolt-lightning"></i>
+                        </div>
+                        <div>
+                            <div class="text-sm font-bold">闪电蓝队</div>
+                            <div class="text-xs text-slate-400">蓝队共 43 人</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-xs text-slate-400">总分</div>
+                        <div class="text-3xl font-black text-cyan-300">57</div>
+                    </div>
+                </div>
+                <div class="mt-4 h-3 rounded-full bg-white/10 overflow-hidden">
+                    <div class="w-[68%] h-full bg-gradient-to-r from-blue-500 to-cyan-300 rounded-full"></div>
+                </div>
+            </div>
+
+            <div class="rounded-[28px] bg-white/5 p-4 border border-white/10">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-rose-500 flex items-center justify-center">
+                            <i class="fa-solid fa-fire"></i>
+                        </div>
+                        <div>
+                            <div class="text-sm font-bold">火箭红队</div>
+                            <div class="text-xs text-slate-400">红队共 43 人</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-xs text-slate-400">总分</div>
+                        <div class="text-3xl font-black text-rose-300">49</div>
+                    </div>
+                </div>
+                <div class="mt-4 h-3 rounded-full bg-white/10 overflow-hidden">
+                    <div class="w-[58%] h-full bg-gradient-to-r from-rose-500 to-orange-300 rounded-full"></div>
+                </div>
+            </div>
+
+            <div class="rounded-[28px] bg-white text-slate-900 p-4">
+                <div class="flex items-center justify-between">
+                    <div class="text-sm font-bold">本队贡献榜 TOP3</div>
+                    <div class="text-xs text-slate-400">下题 5 秒后开始</div>
+                </div>
+                <div class="mt-3 space-y-2 text-sm">
+                    <div class="flex items-center justify-between rounded-2xl bg-blue-50 px-3 py-2">
+                        <span>1. 李想</span>
+                        <span class="font-bold text-blue-600">26 分</span>
+                    </div>
+                    <div class="flex items-center justify-between rounded-2xl bg-slate-50 px-3 py-2">
+                        <span>2. 我</span>
+                        <span class="font-bold text-slate-900">18 分</span>
+                    </div>
+                    <div class="flex items-center justify-between rounded-2xl bg-slate-50 px-3 py-2">
+                        <span>3. 王可</span>
+                        <span class="font-bold text-slate-900">13 分</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="final-result" class="device bg-gradient-to-b from-amber-100 via-white to-orange-50">
+        <div class="status-bar"><span>9:41</span><span><i class="fa-solid fa-battery-full"></i></span></div>
+        <div class="flex-1 overflow-y-auto px-4 pb-6">
+            <div class="text-center pt-4">
+                <div
+                    class="w-20 h-20 rounded-full bg-amber-400 text-white flex items-center justify-center text-4xl mx-auto shadow-lg shadow-amber-200">
+                    <i class="fa-solid fa-crown"></i>
+                </div>
+                <h1 class="text-3xl font-black text-slate-900 mt-4">蓝队获胜</h1>
+                <p class="text-sm text-slate-500 mt-2">恭喜闪电蓝队拿下本轮课堂 PK 第一名</p>
+            </div>
+
+            <div class="mt-5 bg-white rounded-[30px] p-5 shadow-sm border border-white/60">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-xs text-slate-500">队伍总分</div>
+                        <div class="text-3xl font-black text-slate-900 mt-1">96</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-xs text-slate-500">个人贡献</div>
+                        <div class="text-3xl font-black text-blue-600 mt-1">28</div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3 mt-5">
+                    <div class="rounded-2xl bg-blue-50 p-4">
+                        <div class="text-xs text-blue-500">班级奖励</div>
+                        <div class="text-sm font-bold text-slate-900 mt-1">全队星光值 +30</div>
+                    </div>
+                    <div class="rounded-2xl bg-emerald-50 p-4">
+                        <div class="text-xs text-emerald-500">个人奖励</div>
+                        <div class="text-sm font-bold text-slate-900 mt-1">课堂勋章 +1</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 bg-slate-900 text-white rounded-[28px] p-4">
+                <div class="flex items-center justify-between">
+                    <div class="text-sm font-bold">我的 PK 战绩</div>
+                    <span class="text-xs text-amber-300">MVP 候选</span>
+                </div>
+                <div class="grid grid-cols-3 gap-2 mt-3 text-center">
+                    <div class="rounded-2xl bg-white/10 p-3">
+                        <div class="text-[11px] text-slate-400">答对</div>
+                        <div class="text-xl font-black mt-1">4</div>
+                    </div>
+                    <div class="rounded-2xl bg-white/10 p-3">
+                        <div class="text-[11px] text-slate-400">最快</div>
+                        <div class="text-xl font-black mt-1">2</div>
+                    </div>
+                    <div class="rounded-2xl bg-white/10 p-3">
+                        <div class="text-[11px] text-slate-400">队内排名</div>
+                        <div class="text-xl font-black mt-1">#2</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="px-4 pb-6 flex gap-3">
+            <button class="flex-1 bg-white border border-slate-200 text-slate-800 font-bold py-4 rounded-2xl">查看战报</button>
+            <button class="flex-1 bg-slate-900 text-white font-bold py-4 rounded-2xl">继续听课</button>
+        </div>
+    </div>
+
+    <div id="reward-popup" class="device bg-gradient-to-br from-blue-100 via-slate-50 to-violet-100 relative">
+        <div class="absolute inset-0 bg-slate-950/45 z-10"></div>
+        <div class="status-bar relative z-20"><span>9:41</span><span><i class="fa-solid fa-battery-full"></i></span></div>
+        <div class="absolute inset-0 z-20 flex items-center justify-center p-5">
+            <div class="bg-white rounded-[32px] w-full p-6 shadow-2xl text-center relative overflow-hidden">
+                <div class="absolute inset-x-0 top-0 h-24 bg-gradient-to-r from-amber-200 via-orange-200 to-pink-200"></div>
+                <div
+                    class="relative w-20 h-20 rounded-full bg-slate-900 text-white flex items-center justify-center text-3xl mx-auto shadow-lg mt-3">
+                    <i class="fa-solid fa-medal"></i>
+                </div>
+                <h2 class="relative text-2xl font-black text-slate-900 mt-4">获得课堂勋章</h2>
+                <p class="relative text-sm text-slate-500 mt-2">你在本轮 PK 中进入队内前 3，奖励已到账</p>
+                <div class="relative mt-5 rounded-[24px] bg-amber-50 p-4 text-left">
+                    <div class="text-xs text-amber-500">奖励内容</div>
+                    <div class="text-base font-bold text-slate-900 mt-2">课堂星光值 +20</div>
+                    <div class="text-sm text-slate-600 mt-1">PK 荣耀徽章「最佳助攻」x1</div>
+                </div>
+                <button class="relative mt-6 w-full bg-slate-900 text-white font-bold py-4 rounded-2xl">我知道了</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="error-network" class="device bg-slate-50">
+        <div class="status-bar"><span>9:41</span><span><i class="fa-solid fa-battery-full"></i></span></div>
+        <div class="flex-1 flex flex-col items-center justify-center px-6 text-center">
+            <div
+                class="w-24 h-24 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center text-4xl shadow-sm">
+                <i class="fa-solid fa-wifi"></i>
+            </div>
+            <h1 class="text-2xl font-black text-slate-900 mt-6">网络波动，正在重连</h1>
+            <p class="text-sm text-slate-500 mt-3 leading-6">
+                本题答题状态会保留 15 秒，如在倒计时内恢复网络，将自动回到当前题目。
+            </p>
+            <div class="w-full mt-6 rounded-[28px] bg-white p-4 border border-slate-100 shadow-sm text-left">
+                <div class="text-sm font-semibold text-slate-900">兜底规则</div>
+                <ul class="mt-3 text-xs text-slate-500 space-y-2">
+                    <li>1. 已提交答案：保留结果，不重复扣分</li>
+                    <li>2. 未提交答案：恢复后继续本题剩余倒计时</li>
+                    <li>3. 超过 15 秒未恢复：按未作答处理</li>
+                </ul>
+            </div>
+        </div>
+        <div class="px-4 pb-6 flex gap-3">
+            <button class="flex-1 bg-white border border-slate-200 text-slate-800 font-bold py-4 rounded-2xl">返回课堂</button>
+            <button class="flex-1 bg-slate-900 text-white font-bold py-4 rounded-2xl">立即重试</button>
+        </div>
+    </div>
+
+    <script>
+        function updateView() {
+            document.querySelectorAll('.device').forEach(el => el.classList.remove('active'));
+            const hash = window.location.hash.slice(1) || 'team-lobby';
+            const target = document.getElementById(hash);
+            if (target) {
+                target.classList.add('active');
+            } else {
+                document.getElementById('team-lobby').classList.add('active');
+            }
+        }
+
+        window.addEventListener('hashchange', updateView);
+        updateView();
+    </script>
+</body>
+
+</html>
