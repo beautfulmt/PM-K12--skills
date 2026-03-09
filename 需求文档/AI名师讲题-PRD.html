@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI名师讲题 - PRD</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+            line-height: 1.8;
+            color: #333;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 24px;
+            background: #fff;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin: 32px 0 24px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #333;
+        }
+
+        h2 {
+            font-size: 22px;
+            font-weight: 700;
+            margin: 40px 0 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e0e0e0;
+            color: #1a1a1a;
+        }
+
+        h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 28px 0 12px;
+            color: #333;
+        }
+
+        p {
+            margin: 8px 0;
+        }
+
+        ul,
+        ol {
+            margin: 8px 0 8px 24px;
+        }
+
+        li {
+            margin: 4px 0;
+        }
+
+        strong {
+            font-weight: 600;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0 20px;
+            font-size: 14px;
+            table-layout: fixed;
+            /* 固定布局，方便拖拽和限制比例 */
+        }
+
+        th {
+            background: #f5f7fa;
+            font-weight: 600;
+            text-align: left;
+            padding: 10px 12px;
+            border: 1px solid #e0e0e0;
+            overflow: auto;
+            resize: horizontal;
+            word-break: break-all;
+        }
+
+        td {
+            padding: 10px 12px;
+            border: 1px solid #e0e0e0;
+            vertical-align: top;
+            overflow: hidden;
+            word-break: break-word;
+            /* 避免文字挤压时超出边界 */
+        }
+
+        /* 给“原型”这一列单独设置一个宽一点的默认宽度 */
+        th:nth-child(3),
+        td:nth-child(3) {
+            width: 350px;
+        }
+
+        /* 给第一级和第二级一点合适的宽度 */
+        th:nth-child(1),
+        td:nth-child(1) {
+            width: 100px;
+        }
+
+        th:nth-child(2),
+        td:nth-child(2) {
+            width: 100px;
+        }
+
+        .alert {
+            margin: 16px 0;
+            padding: 12px 16px;
+            border-left: 4px solid #e6a700;
+            background: #fffbe6;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .alert strong {
+            color: #8a6d00;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #e0e0e0;
+            margin: 32px 0;
+        }
+
+        .photo-placeholder {
+            background: #f0f5ff;
+            border: 1px dashed #adc6ff;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+            color: #597ef7;
+            font-size: 13px;
+        }
+
+        .toc {
+            background: #fafafa;
+            padding: 16px 24px;
+            border-radius: 8px;
+            margin: 16px 0;
+        }
+
+        .toc ol {
+            margin: 4px 0 4px 20px;
+        }
+
+        .toc li {
+            margin: 4px 0;
+        }
+
+        .meta-table td:first-child {
+            width: 120px;
+            font-weight: 600;
+            background: #fafafa;
+        }
+
+        code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 13px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>AI名师讲题</h1>
+
+    <!-- 项目信息 -->
+    <h2>📋 项目信息</h2>
+    <table class="meta-table">
+        <tr>
+            <td><strong>产品名称</strong></td>
+            <td>XX学生端App</td>
+        </tr>
+        <tr>
+            <td><strong>需求名称</strong></td>
+            <td>AI名师讲题</td>
+        </tr>
+        <tr>
+            <td><strong>文档负责人</strong></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td><strong>所属模块</strong></td>
+            <td>课后</td>
+        </tr>
+        <tr>
+            <td><strong>优先级</strong></td>
+            <td>P0</td>
+        </tr>
+        <tr>
+            <td><strong>预计上线日期</strong></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td><strong>关联文档</strong></td>
+            <td>设计稿链接 / 数据看板</td>
+        </tr>
+    </table>
+
+    <hr>
+
+    <!-- 版本记录 -->
+    <h2>📝 版本记录</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>日期</th>
+                <th>版本号</th>
+                <th>修改内容</th>
+                <th>修改人</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>2025-03-05</td>
+                <td>V1.0</td>
+                <td>初稿</td>
+                <td></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <hr>
+
+    <!-- 一、需求背景 -->
+    <h2>一、需求背景</h2>
+
+    <h3>1.1 现状问题</h3>
+    <p>公司现有一款中价位引流课产品（定价几百元），此类课程在市场上同质化严重，竞争激烈。目前的课程包内容仅包含课程本身，缺少差异化的增值服务，导致在获客转化时缺乏竞争优势。</p>
+
+    <h3>1.2 业务目标</h3>
+    <p>通过在课程包中增加「AI名师讲题」功能，为用户提供<strong>拍照上传题目 → AI个性化讲解</strong>的增值服务，提升课程包的竞争力和用户感知价值，进而：</p>
+    <ul>
+        <li>提升引流课的<strong>转化率</strong></li>
+        <li>提升用户对产品的<strong>粘性和使用频次</strong></li>
+        <li>为高价正价课提供<strong>续报转化抓手</strong></li>
+    </ul>
+
+    <h3>1.3 用户价值</h3>
+    <ul>
+        <li><strong>学生</strong>：作业遇到不会的题，随时拍照获得个性化讲解，相当于随身携带一位AI老师</li>
+        <li><strong>家长</strong>：无需自己辅导，降低辅导焦虑，提升对产品的信任感</li>
+    </ul>
+
+    <hr>
+
+    <!-- 二、需求目标 -->
+    <h2>二、需求目标</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>目标类型</th>
+                <th>描述</th>
+                <th>衡量指标</th>
+                <th>目标值</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>核心目标</td>
+                <td>为引流课提供差异化增值服务</td>
+                <td>功能渗透率（DAU中使用AI讲题的占比）</td>
+                <td>待定</td>
+            </tr>
+            <tr>
+                <td>核心目标</td>
+                <td>提升用户粘性</td>
+                <td>人均使用次数/日</td>
+                <td>待定</td>
+            </tr>
+            <tr>
+                <td>次要目标</td>
+                <td>促进续报转化</td>
+                <td>使用AI讲题用户的续报率 vs 未使用用户</td>
+                <td>待定</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <hr>
+
+    <!-- 三、需求概述 -->
+    <h2>三、需求概述</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>序号</th>
+                <th>功能模块</th>
+                <th>功能点</th>
+                <th>优先级</th>
+                <th>面向端</th>
+                <th>状态</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>1</td>
+                <td>入口</td>
+                <td>首页新增「AI名师讲题」Tab</td>
+                <td>P0</td>
+                <td>学生端</td>
+                <td>新增</td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td>AI老师主页</td>
+                <td>老师形象展示 + 拍照入口</td>
+                <td>P0</td>
+                <td>学生端</td>
+                <td>新增</td>
+            </tr>
+            <tr>
+                <td>3</td>
+                <td>AI老师主页</td>
+                <td>切换AI老师</td>
+                <td>P1</td>
+                <td>学生端</td>
+                <td>新增</td>
+            </tr>
+            <tr>
+                <td>4</td>
+                <td>拍照/上传</td>
+                <td>相机拍照（高端机）</td>
+                <td>P0</td>
+                <td>学生端</td>
+                <td>新增</td>
+            </tr>
+            <tr>
+                <td>5</td>
+                <td>拍照/上传</td>
+                <td>相册上传（全机型）</td>
+                <td>P0</td>
+                <td>学生端</td>
+                <td>新增</td>
+            </tr>
+            <tr>
+                <td>6</td>
+                <td>拍照/上传</td>
+                <td>低端机差异化设计</td>
+                <td>P0</td>
+                <td>学生端</td>
+                <td>新增</td>
+            </tr>
+            <tr>
+                <td>7</td>
+                <td>题目识别</td>
+                <td>图片识别 + 异常处理</td>
+                <td>P0</td>
+                <td>学生端</td>
+                <td>新增</td>
+            </tr>
+            <tr>
+                <td>8</td>
+                <td>讲解结果</td>
+                <td>文字解析 + 语音讲解</td>
+                <td>P0</td>
+                <td>学生端</td>
+                <td>新增</td>
+            </tr>
+            <tr>
+                <td>9</td>
+                <td>答疑历史</td>
+                <td>历史记录查看</td>
+                <td>P1</td>
+                <td>学生端</td>
+                <td>新增</td>
+            </tr>
+            <tr>
+                <td>10</td>
+                <td>使用限制</td>
+                <td>每日5次免费额度</td>
+                <td>P0</td>
+                <td>学生端</td>
+                <td>新增</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <hr>
+
+    <!-- 四、流程图 -->
+    <h2>四、流程图</h2>
+
+    <h3>4.1 用户操作主流程</h3>
+    <iframe src="../流程图/AI名师讲题-flow.html"
+        style="width: 100%; height: 570px; border: none; background: transparent;"></iframe>
+
+    <h3>4.2 次数扣减逻辑</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>场景</th>
+                <th>是否扣减次数</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>识别成功且有讲解</td>
+                <td>✅ 扣减1次</td>
+            </tr>
+            <tr>
+                <td>图片不清晰</td>
+                <td>❌ 不扣减</td>
+            </tr>
+            <tr>
+                <td>非题目内容</td>
+                <td>❌ 不扣减</td>
+            </tr>
+            <tr>
+                <td>无法解析</td>
+                <td>❌ 不扣减</td>
+            </tr>
+            <tr>
+                <td>网络异常</td>
+                <td>❌ 不扣减</td>
+            </tr>
+            <tr>
+                <td>服务超时</td>
+                <td>❌ 不扣减</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <hr>
+
+    <!-- 五、详细方案 -->
+    <h2>五、详细方案</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 90px; min-width: 90px;">一级模块</th>
+                <th style="width: 100px; min-width: 100px;">二级功能</th>
+                <th style="width: 260px; min-width: 260px;">原型</th>
+                <th>描述</th>
+            </tr>
+        </thead>
+        <tbody>
+
+            <!-- 入口 -->
+            <tr>
+                <td><strong>入口</strong></td>
+                <td>首页Tab入口</td>
+                <td>
+                    <iframe src="../原型/AI名师讲题-prototype.html#tab-entry"
+                        style="width: 100%; height: 570px; border: none; background: transparent;"></iframe>
+                </td>
+                <td>
+                    <p><strong>0、功能说明</strong></p>
+                    <ul>
+                        <li>在App首页顶部Tab栏新增「AI名师讲题」Tab</li>
+                    </ul>
+                    <p><strong>1、位置与样式</strong></p>
+                    <ul>
+                        <li>排列顺序：精选 | <strong>AI名师讲题</strong> | AI名师课</li>
+                        <li>选中态显示绿色下划线指示器</li>
+                    </ul>
+                    <p><strong>2、交互逻辑</strong></p>
+                    <ul>
+                        <li>点击Tab或左右滑动均可切换</li>
+                        <li>打开App默认定位「精选」Tab，不自动跳转</li>
+                    </ul>
+                </td>
+            </tr>
+
+            <!-- AI老师主页 -->
+            <tr>
+                <td rowspan="2"><strong>AI老师主页</strong></td>
+                <td>主页展示</td>
+                <td>
+                    <iframe src="../原型/AI名师讲题-prototype.html#home"
+                        style="width: 100%; height: 570px; border: none; background: transparent;"></iframe>
+                </td>
+                <td>
+                    <p><strong>0、功能说明</strong></p>
+                    <ul>
+                        <li>展示当前AI老师形象，提供拍照入口</li>
+                    </ul>
+                    <p><strong>1、页面元素（从上到下）</strong></p>
+                    <ul>
+                        <li><strong>答疑历史入口</strong>：右上角悬浮按钮「🕐 答疑历史」</li>
+                        <li><strong>AI老师形象区</strong>：圆形头像框（大尺寸居中）+ 右下角🔄切换按钮</li>
+                        <li><strong>老师信息</strong>：老师名字 + 风格标签（如"生动活泼风格，她来帮你讲解"）</li>
+                        <li><strong>拍照按钮</strong>：绿色大按钮「📷 拍照题目」，宽度约80%</li>
+                        <li><strong>剩余次数</strong>：按钮下方显示"今日剩余 X/5 次"</li>
+                    </ul>
+                    <p><strong>2、老师展示规则</strong></p>
+                    <ul>
+                        <li>首次进入默认展示第一位AI老师</li>
+                        <li>切换过后记忆选择，下次进入展示上次选择的老师</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td>切换AI老师</td>
+                <td>
+                    <iframe src="../原型/AI名师讲题-prototype.html#switch-teacher"
+                        style="width: 100%; height: 570px; border: none; background: transparent;"></iframe>
+                </td>
+                <td>
+                    <p><strong>0、触发方式</strong></p>
+                    <ul>
+                        <li>点击老师头像右下角🔄按钮</li>
+                    </ul>
+                    <p><strong>1、展示形式</strong></p>
+                    <ul>
+                        <li>底部弹出半屏面板，展示所有可选AI老师列表</li>
+                        <li>每个老师卡片：头像 + 名字 + 风格标签（"生动活泼"/"耐心细致"/"逻辑严谨"）</li>
+                        <li>当前选中老师显示绿色边框/勾选标记</li>
+                    </ul>
+                    <p><strong>2、交互逻辑</strong></p>
+                    <ul>
+                        <li>点击某位老师 → 主页立即切换 → 关闭面板</li>
+                        <li><strong>记忆用户选择</strong>，下次进入仍展示上次的老师</li>
+                    </ul>
+                    <p><strong>3、数据来源</strong></p>
+                    <ul>
+                        <li>后端配置，支持动态增减老师</li>
+                    </ul>
+                </td>
+            </tr>
+
+            <!-- 拍照/上传 -->
+            <tr>
+                <td rowspan="3"><strong>拍照/上传</strong></td>
+                <td>次数校验</td>
+                <td>
+                    <iframe src="../原型/AI名师讲题-prototype.html#limit-modal"
+                        style="width: 100%; height: 570px; border: none; background: transparent;"></iframe>
+                </td>
+                <td>
+                    <p><strong>0、功能说明</strong></p>
+                    <ul>
+                        <li>每日免费5次，点击拍照前先校验剩余次数</li>
+                    </ul>
+                    <p><strong>1、次数充足（>0次）</strong></p>
+                    <ul>
+                        <li>正常进入拍照/相册流程</li>
+                    </ul>
+                    <p><strong>2、次数用完（=0次）</strong></p>
+                    <ul>
+                        <li>弹窗标题："今日次数已用完"</li>
+                        <li>弹窗内容："每天可免费使用5次AI名师讲题，明天再来吧！"</li>
+                        <li>按钮："我知道了"，点击关闭弹窗，留在当前页</li>
+                        <li>拍照按钮变为灰色/置灰态</li>
+                    </ul>
+                    <p><strong>3、次数规则</strong></p>
+                    <ul>
+                        <li>每日00:00自动重置</li>
+                        <li>仅「识别成功且有结果」时扣减，异常不扣减</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td>高端机拍照</td>
+                <td>
+                    <iframe src="../原型/AI名师讲题-prototype.html#camera"
+                        style="width: 100%; height: 570px; border: none; background: transparent;"></iframe>
+                </td>
+                <td>
+                    <p><strong>0、功能说明</strong></p>
+                    <ul>
+                        <li>高端机点击拍照后唤起自定义相机页面</li>
+                    </ul>
+                    <p><strong>1、相机页面元素</strong></p>
+                    <ul>
+                        <li><strong>取景框</strong>：中央矩形区域，虚线边框引导对准题目</li>
+                        <li><strong>引导文案</strong>：取景框上方"请将题目对准框内，保持清晰"</li>
+                        <li><strong>拍照按钮</strong>：底部中央圆形快门</li>
+                        <li><strong>相册入口</strong>：快门左侧，点击打开系统相册</li>
+                        <li><strong>闪光灯</strong>：顶部，支持开/关/自动</li>
+                        <li><strong>关闭按钮</strong>：左上角，返回AI老师主页</li>
+                    </ul>
+                    <p><strong>2、拍照后</strong></p>
+                    <ul>
+                        <li>显示预览页：底部"重新拍照"/"使用照片"</li>
+                        <li>点击"使用照片" → 进入题目识别流程</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td>低端机上传</td>
+                <td>
+                    <iframe src="../原型/AI名师讲题-prototype.html#low-end"
+                        style="width: 100%; height: 570px; border: none; background: transparent;"></iframe>
+                </td>
+                <td>
+                    <p><strong>0、功能说明</strong></p>
+                    <ul>
+                        <li>低端机不唤起相机（避免崩溃），仅相册上传</li>
+                        <li>低端机判定使用<strong>已有设备分级逻辑</strong></li>
+                    </ul>
+                    <p><strong>1、差异化设计</strong></p>
+                    <ul>
+                        <li>点击按钮 → <strong>直接打开系统相册</strong></li>
+                        <li>按钮文案改为「📷 上传题目」</li>
+                        <li>下方灰色小字："当前设备建议从相册上传图片"</li>
+                    </ul>
+                    <p><strong>2、相册选择规则</strong></p>
+                    <ul>
+                        <li>仅支持<strong>单张图片</strong></li>
+                        <li>格式：JPG、PNG、HEIC，不超过20MB</li>
+                    </ul>
+                </td>
+            </tr>
+
+            <!-- 题目识别 -->
+            <tr>
+                <td rowspan="7"><strong>题目识别</strong></td>
+                <td>Loading态</td>
+                <td>
+                    <iframe src="../原型/AI名师讲题-prototype.html#loading"
+                        style="width: 100%; height: 570px; border: none; background: transparent;"></iframe>
+                </td>
+                <td>
+                    <p><strong>0、功能说明</strong></p>
+                    <ul>
+                        <li>提交图片后进入识别等待页面</li>
+                    </ul>
+                    <p><strong>1、页面展示</strong></p>
+                    <ul>
+                        <li>AI老师头像（缩小版）+ 动态loading动画</li>
+                        <li>文案："老师正在看题中..."（可随机轮换趣味文案）</li>
+                    </ul>
+                    <p><strong>2、超时处理</strong></p>
+                    <ul>
+                        <li>超过15秒未返回结果，进入超时状态</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td>成功-有结果</td>
+                <td>
+                    <iframe src="../原型/AI名师讲题-prototype.html#result-success"
+                        style="width: 100%; height: 570px; border: none; background: transparent;"></iframe>
+                </td>
+                <td>
+                    <p><strong>0、功能说明</strong></p>
+                    <ul>
+                        <li>识别出题目且有解析 → 展示讲解结果 → <strong>扣减1次</strong></li>
+                    </ul>
+                    <p><strong>1、页面布局</strong></p>
+                    <ul>
+                        <li><strong>顶部导航栏</strong>：返回 + 标题"AI讲解"</li>
+                        <li><strong>题目原图区</strong>：可点击放大查看</li>
+                        <li><strong>学科标签</strong>：自动识别（数学/语文/英语）</li>
+                        <li><strong>文字解析区</strong>：标题"解题思路"，分步骤展示，支持公式渲染</li>
+                        <li><strong>语音讲解区</strong>：老师头像 + 播放条（播放/暂停 + 进度 + 时间），以当前老师声音讲解</li>
+                        <li><strong>底部操作</strong>："再拍一题"/"分享"</li>
+                    </ul>
+                    <p><strong>2、语音规则</strong></p>
+                    <ul>
+                        <li>不自动播放，手动点击播放；退出页面自动停止</li>
+                    </ul>
+                    <p><strong>3、数据保存</strong></p>
+                    <ul>
+                        <li>自动保存到答疑历史（题目图 + 解析 + 语音 + 学科 + 老师 + 时间）</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td>成功-无结果</td>
+                <td>
+                    <iframe src="../原型/AI名师讲题-prototype.html#error-unclear"
+                        style="width: 100%; height: 570px; border: none; background: transparent;"></iframe>
+                </td>
+                <td>
+                    <p><strong>0、触发条件</strong></p>
+                    <ul>
+                        <li>识别出题目但无法解析（超出学科范围/过于复杂）</li>
+                    </ul>
+                    <p><strong>1、页面展示</strong></p>
+                    <ul>
+                        <li>老师头像 + 抱歉表情</li>
+                        <li>文案："抱歉，这道题老师暂时还不会，换一道试试吧！"</li>
+                        <li>按钮："重新拍照"/"返回首页"</li>
+                    </ul>
+                    <p><strong>不扣减次数</strong></p>
+                </td>
+            </tr>
+            <tr>
+                <td>失败-图片不清晰</td>
+                <td>
+                    <iframe src="../原型/AI名师讲题-prototype.html#error-unclear"
+                        style="width: 100%; height: 570px; border: none; background: transparent;"></iframe>
+                </td>
+                <td>
+                    <p><strong>0、触发条件</strong></p>
+                    <ul>
+                        <li>图片模糊、光线过暗/过曝、题目不完整</li>
+                    </ul>
+                    <p><strong>1、页面展示</strong></p>
+                    <ul>
+                        <li>老师头像 + 疑惑表情</li>
+                        <li>文案："图片不太清晰，老师看不清题目哦"</li>
+                        <li>引导："请确保题目完整、光线充足、文字清晰"</li>
+                        <li>按钮："重新拍照"/"从相册选择"</li>
+                    </ul>
+                    <p><strong>不扣减次数</strong></p>
+                </td>
+            </tr>
+            <tr>
+                <td>失败-非题目内容</td>
+                <td>
+                    <iframe src="../原型/AI名师讲题-prototype.html#error-unclear"
+                        style="width: 100%; height: 570px; border: none; background: transparent;"></iframe>
+                </td>
+                <td>
+                    <p><strong>0、触发条件</strong></p>
+                    <ul>
+                        <li>上传的图片不是题目（自拍、风景照等）</li>
+                    </ul>
+                    <p><strong>1、页面展示</strong></p>
+                    <ul>
+                        <li>老师头像 + 无奈表情</li>
+                        <li>文案："这似乎不是一道题目哦，请拍一道题试试吧！"</li>
+                        <li>按钮："重新拍照"/"从相册选择"</li>
+                    </ul>
+                    <p><strong>不扣减次数</strong></p>
+                </td>
+            </tr>
+            <tr>
+                <td>失败-网络异常</td>
+                <td>
+                    <iframe src="../原型/AI名师讲题-prototype.html#error-unclear"
+                        style="width: 100%; height: 570px; border: none; background: transparent;"></iframe>
+                </td>
+                <td>
+                    <p><strong>0、触发条件</strong></p>
+                    <ul>
+                        <li>网络不可用或请求失败</li>
+                    </ul>
+                    <p><strong>1、页面展示</strong></p>
+                    <ul>
+                        <li>网络错误图标</li>
+                        <li>文案："网络不太好，请检查网络后重试"</li>
+                        <li>按钮："重试"/"返回首页"</li>
+                    </ul>
+                    <p><strong>不扣减次数</strong></p>
+                </td>
+            </tr>
+            <tr>
+                <td>失败-服务超时</td>
+                <td>
+                    <iframe src="../原型/AI名师讲题-prototype.html#error-unclear"
+                        style="width: 100%; height: 570px; border: none; background: transparent;"></iframe>
+                </td>
+                <td>
+                    <p><strong>0、触发条件</strong></p>
+                    <ul>
+                        <li>请求超过15秒未响应</li>
+                    </ul>
+                    <p><strong>1、页面展示</strong></p>
+                    <ul>
+                        <li>老师头像 + 抱歉表情</li>
+                        <li>文案："等了太久了，老师思考超时了，再试一次吧"</li>
+                        <li>按钮："重试"/"返回首页"</li>
+                    </ul>
+                    <p><strong>2、重试逻辑</strong></p>
+                    <ul>
+                        <li>点击"重试"使用同一张图片重新请求，无需重新拍照</li>
+                    </ul>
+                    <p><strong>不扣减次数</strong></p>
+                </td>
+            </tr>
+
+            <!-- 答疑历史 -->
+            <tr>
+                <td><strong>答疑历史</strong></td>
+                <td>历史记录</td>
+                <td>
+                    <iframe src="../原型/AI名师讲题-prototype.html#history"
+                        style="width: 100%; height: 570px; border: none; background: transparent;"></iframe>
+                </td>
+                <td>
+                    <p><strong>0、入口</strong></p>
+                    <ul>
+                        <li>AI老师主页右上角「🕐 答疑历史」按钮</li>
+                    </ul>
+                    <p><strong>1、列表展示</strong></p>
+                    <ul>
+                        <li>按时间倒序排列</li>
+                        <li>每条记录：题目缩略图 + 学科标签 + 老师名 + 时间</li>
+                        <li>点击 → 进入讲解详情页</li>
+                    </ul>
+                    <p><strong>2、分页</strong></p>
+                    <ul>
+                        <li>每页20条，上拉加载更多</li>
+                    </ul>
+                    <p><strong>3、空态</strong></p>
+                    <ul>
+                        <li>"还没有答疑记录哦，去拍一道题试试吧！"</li>
+                        <li>按钮："去拍照"</li>
+                    </ul>
+                    <p><strong>4、其他</strong></p>
+                    <ul>
+                        <li>保留最近<strong>90天</strong>记录</li>
+                        <li>支持左滑删除，不可恢复</li>
+                    </ul>
+                </td>
+            </tr>
+
+        </tbody>
+    </table>
+
+    <div class="alert"><strong>⚠️ 次数扣减规则：</strong>仅「识别成功且有结果」时扣减1次使用次数，其他所有异常场景（不清晰/非题目/无结果/网络异常/超时）均不扣减。</div>
+
+    <hr>
+
+    <!-- 六、异常与边界处理 -->
+    <h2>六、异常与边界处理</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>序号</th>
+                <th>异常场景</th>
+                <th>处理方案</th>
+                <th>兜底策略</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>1</td>
+                <td>网络断连</td>
+                <td>提示检查网络，提供重试按钮</td>
+                <td>已识别的历史记录可离线查看</td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td>识别接口超时（>15秒）</td>
+                <td>提示超时，支持用原图重试</td>
+                <td>最多重试2次，仍失败则提示稍后再试</td>
+            </tr>
+            <tr>
+                <td>3</td>
+                <td>图片不清晰</td>
+                <td>提示重新拍照/选择，给出拍照引导</td>
+                <td>不扣减次数</td>
+            </tr>
+            <tr>
+                <td>4</td>
+                <td>非题目图片</td>
+                <td>友好提示上传题目图片</td>
+                <td>不扣减次数</td>
+            </tr>
+            <tr>
+                <td>5</td>
+                <td>不支持的学科</td>
+                <td>提示"暂不支持该学科"</td>
+                <td>不扣减次数</td>
+            </tr>
+            <tr>
+                <td>6</td>
+                <td>低端机相机崩溃</td>
+                <td>低端机不唤起相机，仅支持相册上传</td>
+                <td>已做差异化设计</td>
+            </tr>
+            <tr>
+                <td>7</td>
+                <td>图片格式不支持</td>
+                <td>提示"请上传JPG/PNG格式图片"</td>
+                <td>相册选择时做格式过滤</td>
+            </tr>
+            <tr>
+                <td>8</td>
+                <td>图片过大（>20MB）</td>
+                <td>提示"图片过大，请重新选择"</td>
+                <td>可考虑自动压缩</td>
+            </tr>
+            <tr>
+                <td>9</td>
+                <td>语音播放失败</td>
+                <td>下方提示"语音加载失败"，文字解析正常展示</td>
+                <td>文字解析为主，语音为辅</td>
+            </tr>
+            <tr>
+                <td>10</td>
+                <td>老师列表加载失败</td>
+                <td>展示默认老师，不影响核心拍照功能</td>
+                <td>缓存上次加载的老师列表</td>
+            </tr>
+            <tr>
+                <td>11</td>
+                <td>次数统计异常</td>
+                <td>以服务端为准，客户端展示可能有延迟</td>
+                <td>服务端做兜底校验</td>
+            </tr>
+            <tr>
+                <td>12</td>
+                <td>公式渲染异常</td>
+                <td>部分复杂公式可能显示异常</td>
+                <td>降级为纯文本展示</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <hr>
+
+    <!-- 七、数据埋点 -->
+    <h2>七、数据埋点</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>序号</th>
+                <th>埋点名</th>
+                <th>触发时机</th>
+                <th>类型</th>
+                <th>参数名</th>
+                <th>参数类型</th>
+                <th>参数值</th>
+                <th>备注</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td rowspan="4">1</td>
+                <td rowspan="4">ai_tab_click</td>
+                <td rowspan="4">点击「AI名师讲题」Tab</td>
+                <td rowspan="4">点击</td>
+                <td>courseId</td>
+                <td>int</td>
+                <td>课程ID</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>lessonId</td>
+                <td>string</td>
+                <td>课次ID</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>subId</td>
+                <td>int</td>
+                <td>学科ID</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>grade_q</td>
+                <td>string</td>
+                <td>年级</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td rowspan="3">2</td>
+                <td rowspan="3">ai_teacher_page_show</td>
+                <td rowspan="3">AI老师主页展示</td>
+                <td rowspan="3">曝光</td>
+                <td>teacherId</td>
+                <td>string</td>
+                <td>当前老师ID</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>teacherName</td>
+                <td>string</td>
+                <td>老师名称</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>remainCount</td>
+                <td>int</td>
+                <td>剩余次数</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td rowspan="2">3</td>
+                <td rowspan="2">ai_switch_teacher</td>
+                <td rowspan="2">点击切换老师</td>
+                <td rowspan="2">点击</td>
+                <td>fromTeacherId</td>
+                <td>string</td>
+                <td>切换前老师ID</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>toTeacherId</td>
+                <td>string</td>
+                <td>切换后老师ID</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td rowspan="2">4</td>
+                <td rowspan="2">ai_photo_click</td>
+                <td rowspan="2">点击「拍照题目」</td>
+                <td rowspan="2">点击</td>
+                <td>deviceType</td>
+                <td>string</td>
+                <td>高端机/低端机</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>remainCount</td>
+                <td>int</td>
+                <td>剩余次数</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td rowspan="2">5</td>
+                <td rowspan="2">ai_photo_take</td>
+                <td rowspan="2">拍照/选择图片完成</td>
+                <td rowspan="2">点击</td>
+                <td>source</td>
+                <td>string</td>
+                <td>camera/album</td>
+                <td>来源</td>
+            </tr>
+            <tr>
+                <td>deviceType</td>
+                <td>string</td>
+                <td>高端机/低端机</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td rowspan="3">6</td>
+                <td rowspan="3">ai_recognize_result</td>
+                <td rowspan="3">识别结果返回</td>
+                <td rowspan="3">曝光</td>
+                <td>resultType</td>
+                <td>string</td>
+                <td>success/unclear/not_question/no_result/network_error/timeout</td>
+                <td>结果类型</td>
+            </tr>
+            <tr>
+                <td>duration</td>
+                <td>int</td>
+                <td>识别耗时(ms)</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>subject</td>
+                <td>string</td>
+                <td>学科</td>
+                <td>成功时</td>
+            </tr>
+            <tr>
+                <td rowspan="2">7</td>
+                <td rowspan="2">ai_explain_show</td>
+                <td rowspan="2">讲解结果页展示</td>
+                <td rowspan="2">曝光</td>
+                <td>teacherId</td>
+                <td>string</td>
+                <td>老师ID</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>subject</td>
+                <td>string</td>
+                <td>学科</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td rowspan="2">8</td>
+                <td rowspan="2">ai_voice_play</td>
+                <td rowspan="2">点击播放语音</td>
+                <td rowspan="2">点击</td>
+                <td>teacherId</td>
+                <td>string</td>
+                <td>老师ID</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>duration</td>
+                <td>int</td>
+                <td>音频时长(s)</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>9</td>
+                <td>ai_history_click</td>
+                <td>点击「答疑历史」</td>
+                <td>点击</td>
+                <td>historyCount</td>
+                <td>int</td>
+                <td>历史记录总数</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td rowspan="2">10</td>
+                <td rowspan="2">ai_history_detail</td>
+                <td rowspan="2">点击某条历史记录</td>
+                <td rowspan="2">点击</td>
+                <td>recordId</td>
+                <td>string</td>
+                <td>记录ID</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>subject</td>
+                <td>string</td>
+                <td>学科</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>11</td>
+                <td>ai_count_exhaust</td>
+                <td>触发次数用完弹窗</td>
+                <td>曝光</td>
+                <td colspan="4">—</td>
+            </tr>
+            <tr>
+                <td>12</td>
+                <td>ai_retake_click</td>
+                <td>点击「重新拍照」</td>
+                <td>点击</td>
+                <td>fromPage</td>
+                <td>string</td>
+                <td>来源页面</td>
+                <td></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p><strong>通用参数说明</strong>（每个埋点默认携带）：</p>
+    <ul>
+        <li><code>courseId</code>: 课程ID (int)</li>
+        <li><code>lessonId</code>: 课次ID (string)</li>
+        <li><code>subId</code>: 学科ID (int)</li>
+        <li><code>grade_q</code>: 年级</li>
+    </ul>
+
+    <hr>
+
+    <!-- 八、上线计划与灰度策略 -->
+    <h2>八、上线计划与灰度策略</h2>
+
+    <h3>8.1 上线节奏</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>阶段</th>
+                <th>时间</th>
+                <th>范围</th>
+                <th>关注指标</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>灰度1期</td>
+                <td>T+1周</td>
+                <td>5%流量</td>
+                <td>功能可用性、崩溃率、识别准确率</td>
+            </tr>
+            <tr>
+                <td>灰度2期</td>
+                <td>T+2周</td>
+                <td>30%流量</td>
+                <td>功能渗透率、人均使用次数、识别成功率</td>
+            </tr>
+            <tr>
+                <td>全量发布</td>
+                <td>T+3周</td>
+                <td>100%</td>
+                <td>核心指标达标后全量</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>8.2 核心关注指标</h3>
+    <ul>
+        <li><strong>识别成功率</strong>：目标 ≥ 90%</li>
+        <li><strong>次数用完比例</strong>：观察5次/天是否合理</li>
+        <li><strong>功能崩溃率</strong>：特别关注低端机，目标 &lt; 0.1%</li>
+    </ul>
+
+    <h3>8.3 回滚方案</h3>
+    <ul>
+        <li>通过服务端开关控制功能入口，可随时下线</li>
+        <li>灰度期间如出现大面积识别失败或崩溃，立即回滚至上一版本</li>
+        <li>回滚不影响已保存的答疑历史数据</li>
+    </ul>
+
+    <hr>
+
+    <h2>📎 附录</h2>
+    <ul>
+        <li>设计稿地址</li>
+        <li>技术方案文档</li>
+        <li>测试用例</li>
+        <li>数据看板</li>
+    </ul>
+
+</body>
+
+</html>

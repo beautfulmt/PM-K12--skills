@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>题目作答模块 - 流程图</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default', securityLevel: 'loose', flowchart: { useMaxWidth: false, htmlLabels: true, curve: 'basis' } });
+    </script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+            background: #f9fafb;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            padding: 24px;
+            margin-bottom: 24px;
+            overflow-x: auto;
+        }
+
+        h2 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 16px;
+            border-left: 4px solid #3b82f6;
+            padding-left: 12px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="max-w-5xl mx-auto">
+
+        <div class="chart-container">
+            <h2>题目作答主流程</h2>
+            <pre class="mermaid">
+sequenceDiagram
+    participant U as 学生
+    participant C as 小程序客户端
+    participant S as 服务端
+    participant AI as AI评分服务
+
+    U->>C: 进入答题页面
+    C->>S: 请求当前题组数据
+    S-->>C: 返回题组列表 含题型/题目内容/总题数
+
+    loop 逐题作答
+        C-->>U: 展示当前题目 含进度条
+
+        alt 数学口算-手写题
+            U->>C: 在Canvas手写区书写答案
+            C->>C: 本地手写识别为数字
+            U->>C: 点击下一题
+            C->>C: 暂存答案到本地
+
+        else 语文-选择题
+            U->>C: 点击选中某个选项
+            C->>C: 高亮选中项
+            U->>C: 点击下一题
+            C->>C: 暂存答案到本地
+
+        else 语音朗读题
+            U->>C: 点击录音按钮开始录音
+            C-->>U: 展示录音中状态和波形动画
+            U->>C: 点击停止录音
+            C->>C: 暂存音频文件到本地
+            U->>C: 点击下一题
+        end
+    end
+
+    U->>C: 最后一题点击提交
+    C->>S: 提交全部答案 含手写结果/选项/音频文件
+
+    par 服务端并行处理
+        S->>S: 校验口算题和选择题答案
+        S->>AI: 发送朗读音频进行AI评分
+        AI-->>S: 返回朗读评分结果
+    end
+
+    S->>S: 汇总计算总分和逐题结果
+    S-->>C: 返回完整的答题报告数据
+    C-->>U: 展示练习报告页 含总分/对错/用时/逐题明细
+            </pre>
+        </div>
+
+    </div>
+</body>
+
+</html>

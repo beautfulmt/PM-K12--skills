@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI名师讲题 - 流程图</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default', securityLevel: 'loose', flowchart: { useMaxWidth: false, htmlLabels: true, curve: 'basis' } });
+    </script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+            background: #f9fafb;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            padding: 24px;
+            margin-bottom: 24px;
+            overflow-x: auto;
+        }
+
+        h2 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 16px;
+            border-left: 4px solid #10b981;
+            padding-left: 12px;
+        }
+
+        ::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="max-w-4xl mx-auto">
+
+        <!-- 核心交互时序图 -->
+        <div class="chart-container" id="flow-main">
+            <h2>1. 用户操作主流程</h2>
+            <pre class="mermaid">
+sequenceDiagram
+    participant U as 用户 (学生/家长)
+    participant C as 客户端 (App)
+    participant S as 服务端 (业务层)
+    participant AI as AI大模型服务
+    
+    U->>C: 点击「AI名师讲题」Tab
+    C->>S: 拉取用户剩余次数 & 当前老师信息
+    S-->>C: 返回 (剩余次数:N, 老师信息)
+    C-->>U: 展示AI老师主页
+    
+    alt N = 0
+        U->>C: 点击「拍照题目」
+        C-->>U: 弹窗提示"今日次数已用完"
+    else N > 0
+        U->>C: 点击「拍照题目」
+        
+        opt 需要切换老师时
+            U->>C: 点击切换老师按钮
+            C->>S: 获取老师列表
+            S-->>C: 返回老师列表
+            U->>C: 选择新老师
+            C->>C: 记录选择
+        end
+        
+        alt 高端机
+            C-->>U: 唤起自定义相机页
+            U->>C: 拍照或相册选图
+        else 低端机
+            C-->>U: 唤起系统相册
+            U->>C: 选择图片
+        end
+        
+        C-->>U: 展示Loading态 (老师正在看题中...)
+        C->>S: 提交图片 + 学科(可选) + 提示词风格(老师)
+        S->>AI: 发送识别与解析请求
+        
+        alt AI处理成功且有结果
+            AI-->>S: 返回识别文字、解析步骤、音频URL等
+            S->>S: 扣减用户次数 (-1)
+            S->>S: 保存答疑历史记录
+            S-->>C: 返回讲解数据结果
+            C-->>U: 展示讲解结果页(原图、解析、语音)
+        else AI识别图片不清晰/非题目
+            AI-->>S: 返回错误分类标识
+            S-->>C: 返回不清晰/非题目错误提示
+            C-->>U: 展示失败提示页，引导重新拍照
+        else 请求超时 (>15s) 或网络异常
+            S-->>C: 返回超时/网络错误
+            C-->>U: 展示异常提示页，提供重试按钮
+        end
+    end
+            </pre>
+        </div>
+
+
+
+    </div>
+
+</body>
+
+</html>

@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>题目作答模块 - 原型</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: transparent;
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .device {
+            width: 100%;
+            max-width: 375px;
+            height: 667px;
+            background: #f8f9fa;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid #e5e7eb;
+            border-radius: 24px;
+            box-shadow: 0 4px 20px rgb(0 0 0 / 0.08);
+            margin: 0 auto;
+            display: none;
+            flex-direction: column;
+        }
+
+        .device.active {
+            display: flex;
+        }
+
+        ::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* 手写区画布样式 */
+        .canvas-area {
+            background: #fff;
+            border: 2px dashed #d1d5db;
+            border-radius: 12px;
+            position: relative;
+        }
+
+        .canvas-area .grid-line {
+            position: absolute;
+            background: #f3f4f6;
+        }
+
+        .canvas-area .grid-line.h {
+            width: 100%;
+            height: 1px;
+        }
+
+        .canvas-area .grid-line.v {
+            height: 100%;
+            width: 1px;
+        }
+
+        /* 语音波形动画 */
+        @keyframes wave {
+
+            0%,
+            100% {
+                height: 8px;
+            }
+
+            50% {
+                height: 24px;
+            }
+        }
+
+        .wave-bar {
+            width: 3px;
+            background: #10b981;
+            border-radius: 2px;
+            animation: wave 0.8s ease-in-out infinite;
+        }
+
+        .wave-bar:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+
+        .wave-bar:nth-child(3) {
+            animation-delay: 0.2s;
+        }
+
+        .wave-bar:nth-child(4) {
+            animation-delay: 0.3s;
+        }
+
+        .wave-bar:nth-child(5) {
+            animation-delay: 0.4s;
+        }
+
+        .wave-bar:nth-child(6) {
+            animation-delay: 0.3s;
+        }
+
+        .wave-bar:nth-child(7) {
+            animation-delay: 0.2s;
+        }
+
+        /* 进度条动画 */
+        @keyframes progress {
+            from {
+                width: 0;
+            }
+
+            to {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body class="flex justify-center">
+
+    <!-- ==================== -->
+    <!-- 1. 数学-口算手写题 -->
+    <!-- ==================== -->
+    <div id="math-handwrite" class="device">
+        <!-- 顶部导航 -->
+        <div class="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100">
+            <i class="fa-solid fa-xmark text-gray-500 text-lg w-8"></i>
+            <div class="flex items-center gap-2">
+                <span class="bg-blue-50 text-blue-600 text-xs font-bold px-2.5 py-1 rounded-full">数学 · 口算</span>
+            </div>
+            <div class="w-8"></div>
+        </div>
+
+        <!-- 进度条 -->
+        <div class="px-4 pt-3 pb-1 bg-white">
+            <div class="flex justify-between text-xs text-gray-400 mb-1.5">
+                <span>第 3/10 题</span>
+                <span class="text-blue-500 font-medium">30%</span>
+            </div>
+            <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div class="h-full bg-gradient-to-r from-blue-400 to-blue-500 rounded-full transition-all"
+                    style="width: 30%"></div>
+            </div>
+        </div>
+
+        <!-- 题目区 -->
+        <div class="px-6 py-6 bg-white">
+            <div class="text-center">
+                <p class="text-gray-400 text-xs mb-3">请计算下面的算式</p>
+                <div class="text-5xl font-bold text-gray-800 tracking-wider">
+                    36 + 47 = <span class="text-blue-400">?</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 手写区域 -->
+        <div class="flex-1 px-4 pb-2">
+            <div class="flex items-center justify-between mb-2">
+                <p class="text-xs text-gray-400 font-medium">✏️ 在下方区域手写答案</p>
+                <button class="text-xs text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full flex items-center gap-1">
+                    <i class="fa-solid fa-eraser text-[10px]"></i> 清除
+                </button>
+            </div>
+            <div class="canvas-area w-full h-44 flex items-center justify-center">
+                <!-- 模拟手写内容 -->
+                <span class="text-6xl font-bold text-gray-700" style="font-family: 'Caveat', cursive;">83</span>
+                <!-- 网格辅助线 -->
+                <div class="grid-line h" style="top: 33%"></div>
+                <div class="grid-line h" style="top: 66%"></div>
+                <div class="grid-line v" style="left: 50%"></div>
+            </div>
+        </div>
+
+        <!-- 底部操作 -->
+        <div class="px-4 pb-6 pt-2 bg-white border-t border-gray-50">
+            <div class="flex gap-3">
+                <button class="flex-1 py-3.5 bg-gray-100 text-gray-600 rounded-xl font-bold text-sm">
+                    <i class="fa-solid fa-arrow-left mr-1"></i> 上一题
+                </button>
+                <button
+                    class="flex-[2] py-3.5 bg-blue-500 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-200">
+                    下一题 <i class="fa-solid fa-arrow-right ml-1"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== -->
+    <!-- 2. 语文-选择题 -->
+    <!-- ==================== -->
+    <div id="chinese-choice" class="device">
+        <div class="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100">
+            <i class="fa-solid fa-xmark text-gray-500 text-lg w-8"></i>
+            <span class="bg-orange-50 text-orange-600 text-xs font-bold px-2.5 py-1 rounded-full">语文 · 选择</span>
+            <div class="w-8"></div>
+        </div>
+
+        <!-- 进度 -->
+        <div class="px-4 pt-3 pb-1 bg-white">
+            <div class="flex justify-between text-xs text-gray-400 mb-1.5">
+                <span>第 5/8 题</span>
+                <span class="text-orange-500 font-medium">62%</span>
+            </div>
+            <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div class="h-full bg-gradient-to-r from-orange-400 to-orange-500 rounded-full" style="width: 62%">
+                </div>
+            </div>
+        </div>
+
+        <!-- 题目 -->
+        <div class="px-5 py-5 bg-white">
+            <p class="text-gray-400 text-xs mb-2">选出下列加点字注音全部正确的一组</p>
+            <div class="text-base text-gray-800 leading-relaxed font-medium">
+                下列加点字的读音，全部正确的一项是（ ）
+            </div>
+        </div>
+
+        <!-- 选项列表 -->
+        <div class="flex-1 px-4 space-y-3 overflow-y-auto pb-4">
+            <!-- 选项A -->
+            <div
+                class="flex items-start gap-3 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm active:bg-gray-50 transition-colors">
+                <div
+                    class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center font-bold text-sm flex-shrink-0 mt-0.5">
+                    A</div>
+                <p class="text-sm text-gray-700 leading-relaxed">追<strong>溯</strong>（sù） <strong>绯</strong>红（fěi）
+                    忍俊不<strong>禁</strong>（jīn）</p>
+            </div>
+            <!-- 选项B - 选中态 -->
+            <div class="flex items-start gap-3 p-4 bg-blue-50 rounded-2xl border-2 border-blue-400 shadow-sm relative">
+                <div
+                    class="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold text-sm flex-shrink-0 mt-0.5">
+                    B</div>
+                <p class="text-sm text-gray-700 leading-relaxed"><strong>哺</strong>育（bǔ） <strong>瞥</strong>见（piē）
+                    锲而不<strong>舍</strong>（qì）</p>
+                <div class="absolute top-2 right-3"><i class="fa-solid fa-circle-check text-blue-500"></i></div>
+            </div>
+            <!-- 选项C -->
+            <div class="flex items-start gap-3 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm">
+                <div
+                    class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center font-bold text-sm flex-shrink-0 mt-0.5">
+                    C</div>
+                <p class="text-sm text-gray-700 leading-relaxed"><strong>殷</strong>红（yīn） <strong>恣</strong>睢（zì）
+                    叱<strong>咤</strong>风云（zhà）</p>
+            </div>
+            <!-- 选项D -->
+            <div class="flex items-start gap-3 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm">
+                <div
+                    class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center font-bold text-sm flex-shrink-0 mt-0.5">
+                    D</div>
+                <p class="text-sm text-gray-700 leading-relaxed"><strong>蜷</strong>伏（quán） <strong>亘</strong>古（gèn）
+                    断壁残<strong>垣</strong>（huán）</p>
+            </div>
+        </div>
+
+        <!-- 底部 -->
+        <div class="px-4 pb-6 pt-2 bg-white border-t border-gray-50">
+            <div class="flex gap-3">
+                <button class="flex-1 py-3.5 bg-gray-100 text-gray-600 rounded-xl font-bold text-sm">
+                    <i class="fa-solid fa-arrow-left mr-1"></i> 上一题
+                </button>
+                <button
+                    class="flex-[2] py-3.5 bg-orange-500 text-white rounded-xl font-bold text-sm shadow-lg shadow-orange-200">
+                    下一题 <i class="fa-solid fa-arrow-right ml-1"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== -->
+    <!-- 3. 语音朗读题 -->
+    <!-- ==================== -->
+    <div id="voice-read" class="device">
+        <div class="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100">
+            <i class="fa-solid fa-xmark text-gray-500 text-lg w-8"></i>
+            <span class="bg-green-50 text-green-600 text-xs font-bold px-2.5 py-1 rounded-full">语文 · 朗读</span>
+            <div class="w-8"></div>
+        </div>
+
+        <!-- 进度 -->
+        <div class="px-4 pt-3 pb-1 bg-white">
+            <div class="flex justify-between text-xs text-gray-400 mb-1.5">
+                <span>第 2/5 题</span>
+                <span class="text-green-500 font-medium">40%</span>
+            </div>
+            <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div class="h-full bg-gradient-to-r from-green-400 to-green-500 rounded-full" style="width: 40%"></div>
+            </div>
+        </div>
+
+        <!-- 题目文本 -->
+        <div class="px-5 py-5 bg-white">
+            <p class="text-gray-400 text-xs mb-3">请朗读以下内容，系统将自动评分</p>
+            <div class="bg-amber-50 border border-amber-100 rounded-2xl p-5">
+                <p class="text-lg text-gray-800 leading-loose tracking-wide font-medium">
+                    <ruby>春<rp>(</rp>
+                        <rt class="text-[10px] text-gray-400">chūn</rt>
+                        <rp>)</rp>
+                    </ruby>眠不觉晓，处处闻啼鸟。夜来风雨声，花落知多少。
+                </p>
+                <p class="text-right text-sm text-gray-400 mt-3">—— 唐 · 孟浩然《春晓》</p>
+            </div>
+        </div>
+
+        <!-- 试听示范 -->
+        <div class="px-5 mb-4">
+            <div class="flex items-center gap-3 bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
+                <div class="w-9 h-9 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center">
+                    <i class="fa-solid fa-volume-high text-sm"></i>
+                </div>
+                <div class="flex-1">
+                    <p class="text-xs text-gray-500">听示范朗读</p>
+                    <div class="h-1 bg-gray-100 rounded-full mt-1.5 overflow-hidden">
+                        <div class="h-full bg-amber-400 rounded-full" style="width: 60%"></div>
+                    </div>
+                </div>
+                <span class="text-[10px] text-gray-400">0:04/0:08</span>
+            </div>
+        </div>
+
+        <!-- 录音区状态 -->
+        <div class="flex-1 flex flex-col items-center justify-center px-6">
+            <!-- 波形动画 -->
+            <div class="flex items-center justify-center gap-1 h-10 mb-4">
+                <div class="wave-bar" style="height: 12px;"></div>
+                <div class="wave-bar" style="height: 20px;"></div>
+                <div class="wave-bar" style="height: 28px;"></div>
+                <div class="wave-bar" style="height: 16px;"></div>
+                <div class="wave-bar" style="height: 24px;"></div>
+                <div class="wave-bar" style="height: 20px;"></div>
+                <div class="wave-bar" style="height: 12px;"></div>
+            </div>
+            <p class="text-green-600 font-bold text-sm mb-1">录音中... 00:03</p>
+            <p class="text-gray-400 text-xs">请大声、清晰地朗读</p>
+        </div>
+
+        <!-- 底部操作 -->
+        <div class="px-4 pb-6 pt-4 bg-white border-t border-gray-50">
+            <div class="flex items-center justify-center gap-8">
+                <button class="w-12 h-12 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
+                <!-- 录音按钮 - 录制中态 -->
+                <button
+                    class="w-16 h-16 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg shadow-red-200 border-4 border-red-100">
+                    <i class="fa-solid fa-stop text-xl"></i>
+                </button>
+                <button
+                    class="w-12 h-12 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center opacity-50">
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+            <p class="text-center text-xs text-gray-400 mt-3">点击停止按钮结束录音</p>
+        </div>
+    </div>
+
+    <!-- ==================== -->
+    <!-- 4. 语音朗读-未开始 -->
+    <!-- ==================== -->
+    <div id="voice-idle" class="device">
+        <div class="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100">
+            <i class="fa-solid fa-xmark text-gray-500 text-lg w-8"></i>
+            <span class="bg-green-50 text-green-600 text-xs font-bold px-2.5 py-1 rounded-full">语文 · 朗读</span>
+            <div class="w-8"></div>
+        </div>
+        <div class="px-4 pt-3 pb-1 bg-white">
+            <div class="flex justify-between text-xs text-gray-400 mb-1.5">
+                <span>第 2/5 题</span>
+                <span class="text-green-500 font-medium">40%</span>
+            </div>
+            <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div class="h-full bg-gradient-to-r from-green-400 to-green-500 rounded-full" style="width: 40%"></div>
+            </div>
+        </div>
+        <div class="px-5 py-5 bg-white">
+            <p class="text-gray-400 text-xs mb-3">请朗读以下内容，系统将自动评分</p>
+            <div class="bg-amber-50 border border-amber-100 rounded-2xl p-5">
+                <p class="text-lg text-gray-800 leading-loose tracking-wide font-medium">
+                    春眠不觉晓，处处闻啼鸟。夜来风雨声，花落知多少。
+                </p>
+                <p class="text-right text-sm text-gray-400 mt-3">—— 唐 · 孟浩然《春晓》</p>
+            </div>
+        </div>
+        <div class="px-5 mb-4">
+            <div class="flex items-center gap-3 bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
+                <div class="w-9 h-9 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center">
+                    <i class="fa-solid fa-play text-sm"></i>
+                </div>
+                <div class="flex-1">
+                    <p class="text-xs text-gray-500">听示范朗读</p>
+                    <div class="h-1 bg-gray-100 rounded-full mt-1.5"></div>
+                </div>
+                <span class="text-[10px] text-gray-400">0:08</span>
+            </div>
+        </div>
+        <div class="flex-1 flex flex-col items-center justify-center px-6">
+            <div class="w-20 h-20 rounded-full bg-gray-100 text-gray-300 flex items-center justify-center mb-4">
+                <i class="fa-solid fa-microphone text-3xl"></i>
+            </div>
+            <p class="text-gray-500 font-medium text-sm">点击下方按钮开始录音</p>
+        </div>
+        <div class="px-4 pb-6 pt-4 bg-white border-t border-gray-50">
+            <div class="flex items-center justify-center gap-8">
+                <div class="w-12 h-12"></div>
+                <button
+                    class="w-16 h-16 rounded-full bg-green-500 text-white flex items-center justify-center shadow-lg shadow-green-200 border-4 border-green-100">
+                    <i class="fa-solid fa-microphone text-2xl"></i>
+                </button>
+                <div class="w-12 h-12"></div>
+            </div>
+            <p class="text-center text-xs text-gray-400 mt-3">请在安静环境下录音</p>
+        </div>
+    </div>
+
+    <!-- ==================== -->
+    <!-- 5. 结果页 - 汇总 -->
+    <!-- ==================== -->
+    <div id="result" class="device bg-gradient-to-b from-blue-50 to-white">
+        <div class="flex items-center justify-between px-4 py-3">
+            <i class="fa-solid fa-xmark text-gray-500 text-lg w-8"></i>
+            <span class="font-bold text-gray-800">练习报告</span>
+            <div class="w-8"></div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto">
+            <!-- 成绩卡片 -->
+            <div class="mx-4 bg-white rounded-3xl shadow-sm border border-gray-100 p-6 text-center mb-4">
+                <div class="relative inline-block mb-3">
+                    <div
+                        class="w-28 h-28 rounded-full border-[6px] border-blue-100 flex items-center justify-center bg-gradient-to-br from-blue-50 to-white">
+                        <div>
+                            <span class="text-4xl font-black text-blue-600">85</span>
+                            <span class="text-lg text-blue-400 font-bold">分</span>
+                        </div>
+                    </div>
+                    <div
+                        class="absolute -top-1 -right-1 bg-yellow-400 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-sm">
+                        🌟 棒!</div>
+                </div>
+                <p class="text-gray-500 text-sm">本次练习完成啦，你真棒！</p>
+
+                <!-- 数据行 -->
+                <div class="flex justify-around mt-5 pt-4 border-t border-gray-50">
+                    <div class="text-center">
+                        <p class="text-xl font-bold text-green-500">8</p>
+                        <p class="text-[10px] text-gray-400 mt-1">答对</p>
+                    </div>
+                    <div class="w-px h-8 bg-gray-100 self-center"></div>
+                    <div class="text-center">
+                        <p class="text-xl font-bold text-red-400">2</p>
+                        <p class="text-[10px] text-gray-400 mt-1">答错</p>
+                    </div>
+                    <div class="w-px h-8 bg-gray-100 self-center"></div>
+                    <div class="text-center">
+                        <p class="text-xl font-bold text-gray-700">10</p>
+                        <p class="text-[10px] text-gray-400 mt-1">总题数</p>
+                    </div>
+                    <div class="w-px h-8 bg-gray-100 self-center"></div>
+                    <div class="text-center">
+                        <p class="text-xl font-bold text-blue-500">2:30</p>
+                        <p class="text-[10px] text-gray-400 mt-1">用时</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 逐题明细 -->
+            <div class="mx-4 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-4">
+                <div class="px-4 py-3 border-b border-gray-50 flex justify-between items-center">
+                    <h3 class="font-bold text-gray-800 text-sm">答题明细</h3>
+                    <span class="text-xs text-gray-400">正确率 80%</span>
+                </div>
+                <!-- 题1 正确 -->
+                <div class="flex items-center gap-3 px-4 py-3 border-b border-gray-50">
+                    <div
+                        class="w-7 h-7 rounded-full bg-green-100 text-green-500 flex items-center justify-center text-xs">
+                        <i class="fa-solid fa-check"></i></div>
+                    <div class="flex-1">
+                        <p class="text-sm text-gray-700">第1题 · 口算</p>
+                        <p class="text-xs text-gray-400">12 + 8 = 20</p>
+                    </div>
+                    <span class="text-xs text-green-500 font-medium">正确</span>
+                </div>
+                <!-- 题2 正确 -->
+                <div class="flex items-center gap-3 px-4 py-3 border-b border-gray-50">
+                    <div
+                        class="w-7 h-7 rounded-full bg-green-100 text-green-500 flex items-center justify-center text-xs">
+                        <i class="fa-solid fa-check"></i></div>
+                    <div class="flex-1">
+                        <p class="text-sm text-gray-700">第2题 · 口算</p>
+                        <p class="text-xs text-gray-400">45 - 17 = 28</p>
+                    </div>
+                    <span class="text-xs text-green-500 font-medium">正确</span>
+                </div>
+                <!-- 题3 错误 -->
+                <div class="flex items-center gap-3 px-4 py-3 border-b border-gray-50 bg-red-50/50">
+                    <div class="w-7 h-7 rounded-full bg-red-100 text-red-500 flex items-center justify-center text-xs">
+                        <i class="fa-solid fa-xmark"></i></div>
+                    <div class="flex-1">
+                        <p class="text-sm text-gray-700">第3题 · 口算</p>
+                        <p class="text-xs text-gray-400">36 + 47 = <span class="text-red-500 line-through">83</span> →
+                            <span class="text-green-600 font-medium">83 ✓</span></p>
+                    </div>
+                    <span class="text-xs text-red-400 font-medium">识别错误</span>
+                </div>
+                <!-- 题4 选择题 正确 -->
+                <div class="flex items-center gap-3 px-4 py-3 border-b border-gray-50">
+                    <div
+                        class="w-7 h-7 rounded-full bg-green-100 text-green-500 flex items-center justify-center text-xs">
+                        <i class="fa-solid fa-check"></i></div>
+                    <div class="flex-1">
+                        <p class="text-sm text-gray-700">第4题 · 选择</p>
+                        <p class="text-xs text-gray-400">选B · 注音全正确</p>
+                    </div>
+                    <span class="text-xs text-green-500 font-medium">正确</span>
+                </div>
+                <!-- 题5 朗读 -->
+                <div class="flex items-center gap-3 px-4 py-3">
+                    <div
+                        class="w-7 h-7 rounded-full bg-green-100 text-green-500 flex items-center justify-center text-xs">
+                        <i class="fa-solid fa-check"></i></div>
+                    <div class="flex-1">
+                        <p class="text-sm text-gray-700">第5题 · 朗读</p>
+                        <p class="text-xs text-gray-400">《春晓》· 发音评分</p>
+                    </div>
+                    <span class="text-xs text-blue-500 font-medium">92分</span>
+                </div>
+            </div>
+            <div class="h-28"></div>
+        </div>
+
+        <!-- 底部 -->
+        <div
+            class="absolute bottom-0 left-0 right-0 px-4 pb-6 pt-6 bg-gradient-to-t from-white via-white to-transparent">
+            <div class="flex gap-3">
+                <button
+                    class="flex-1 py-3.5 bg-white border border-gray-200 text-gray-600 rounded-xl font-bold text-sm shadow-sm">查看错题</button>
+                <button
+                    class="flex-1 py-3.5 bg-blue-500 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-200">完成</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== -->
+    <!-- 6. 单题错误反馈（错题详情） -->
+    <!-- ==================== -->
+    <div id="wrong-detail" class="device">
+        <div class="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100">
+            <i class="fa-solid fa-chevron-left text-gray-500 text-lg w-8"></i>
+            <span class="font-bold text-gray-800 text-sm">错题详情</span>
+            <div class="w-8"></div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-4 space-y-4">
+            <!-- 原题 -->
+            <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="bg-red-100 text-red-500 text-xs font-bold px-2 py-0.5 rounded">答错</span>
+                    <span class="bg-blue-50 text-blue-500 text-xs px-2 py-0.5 rounded">口算题</span>
+                </div>
+                <p class="text-2xl font-bold text-gray-800 mb-4">36 + 47 = ?</p>
+                <div class="flex gap-4">
+                    <div class="flex-1 bg-red-50 rounded-xl p-3 text-center border border-red-100">
+                        <p class="text-xs text-gray-400 mb-1">你的答案</p>
+                        <p class="text-xl font-bold text-red-500">83</p>
+                    </div>
+                    <div class="flex-1 bg-green-50 rounded-xl p-3 text-center border border-green-100">
+                        <p class="text-xs text-gray-400 mb-1">正确答案</p>
+                        <p class="text-xl font-bold text-green-600">83</p>
+                    </div>
+                </div>
+                <div class="mt-3 bg-amber-50 rounded-lg p-3 text-xs text-amber-700">
+                    <i class="fa-solid fa-lightbulb text-amber-400 mr-1"></i> 你的答案数字正确，但手写识别为"88"，请书写更清晰哦
+                </div>
+            </div>
+        </div>
+
+        <div class="px-4 pb-6 pt-2 bg-white border-t border-gray-50">
+            <button class="w-full py-3.5 bg-blue-500 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-200">
+                下一道错题 <i class="fa-solid fa-arrow-right ml-1"></i>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        function updateView() {
+            document.querySelectorAll('.device').forEach(el => el.classList.remove('active'));
+            const hash = window.location.hash.slice(1) || 'math-handwrite';
+            const target = document.getElementById(hash);
+            if (target) target.classList.add('active');
+            else document.getElementById('math-handwrite').classList.add('active');
+        }
+        window.addEventListener('hashchange', updateView);
+        updateView();
+    </script>
+</body>
+
+</html>

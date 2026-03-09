@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI名师讲题 - 原型</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: transparent;
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .device {
+            width: 100%;
+            max-width: 320px;
+            height: 568px;
+            background: #f3f4f6;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid #e5e7eb;
+            border-radius: 24px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            margin: 0 auto;
+            display: none;
+            flex-direction: column;
+        }
+
+        .device.active {
+            display: flex;
+        }
+
+        /* Safe Area / Status Bar Placeholder */
+        .status-bar {
+            height: 24px;
+            background: transparent;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 16px;
+            font-size: 12px;
+            font-weight: 500;
+            color: #111827;
+            margin-top: 8px;
+        }
+
+        /* 隐藏滚动条 */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+
+<body class="flex justify-center">
+
+    <!-- 1. 首页Tab入口 -->
+    <div id="tab-entry" class="device bg-white">
+        <div class="status-bar"><span>9:41</span><span><i class="fa-solid fa-signal"></i> <i
+                    class="fa-solid fa-wifi"></i> <i class="fa-solid fa-battery-full"></i></span></div>
+        <div class="flex px-4 pt-4 pb-2 border-b">
+            <div class="flex-1 flex gap-6 text-base font-medium">
+                <div class="text-gray-500">精选</div>
+                <div class="text-gray-900 relative">
+                    AI名师讲题
+                    <div
+                        class="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-4 h-1 bg-green-500 rounded-full">
+                    </div>
+                </div>
+                <div class="text-gray-500">AI名师课</div>
+            </div>
+            <div class="text-gray-400"><i class="fa-solid fa-search"></i></div>
+        </div>
+        <div class="flex-1 bg-gray-50 flex items-center justify-center text-gray-400 text-sm">
+            AI老师主页内容区...
+        </div>
+    </div>
+
+    <!-- 2. AI老师主页 -->
+    <div id="home" class="device bg-green-50">
+        <div class="status-bar"><span>9:41</span><span><i class="fa-solid fa-battery-full"></i></span></div>
+        <!-- 头部导航 -->
+        <div class="flex justify-between items-center px-4 py-2">
+            <i class="fa-solid fa-chevron-left text-gray-700"></i>
+            <div
+                class="bg-white/60 px-3 py-1 rounded-full text-xs font-medium text-gray-700 shadow-sm flex items-center gap-1 cursor-pointer">
+                <i class="fa-regular fa-clock"></i> 答疑历史
+            </div>
+        </div>
+
+        <!-- 老师形象区 -->
+        <div class="flex-1 flex flex-col items-center justify-center px-4 relative">
+            <div class="relative w-40 h-40 mb-4">
+                <div
+                    class="w-full h-full rounded-full bg-green-200 border-4 border-white shadow-lg flex items-center justify-center overflow-hidden">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=TeacherJane&backgroundColor=b6e3f4"
+                        alt="Teacher" class="w-full h-full object-cover">
+                </div>
+                <!-- 切换老师按钮 -->
+                <div
+                    class="absolute bottom-0 right-0 bg-white rounded-full p-2 shadow-md cursor-pointer border border-gray-100 flex items-center justify-center w-10 h-10 text-green-600 hover:bg-green-50">
+                    <i class="fa-solid fa-rotate w-4 h-4 text-center"></i>
+                </div>
+            </div>
+            <h2 class="text-xl font-bold text-gray-800">Jane 老师</h2>
+            <p class="text-sm text-gray-600 mt-2 bg-white/50 px-3 py-1 rounded-full text-center">✨ 生动活泼风格，她来帮你详解</p>
+        </div>
+
+        <!-- 底部固定栏 -->
+        <div class="pb-8 pt-4 px-6 bg-gradient-to-t from-white to-transparent">
+            <button
+                class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-green-200 flex items-center justify-center gap-2 transition-transform active:scale-95 text-lg">
+                <i class="fa-solid fa-camera"></i> 拍题讲解
+            </button>
+            <p class="text-center text-xs text-gray-500 mt-3">今日剩余 4/5 次</p>
+        </div>
+    </div>
+
+    <!-- 3. 切换老师面板 -->
+    <div id="switch-teacher" class="device bg-green-50 relative">
+        <!-- 背景层同主页 -->
+        <div class="absolute inset-0 opacity-40 mix-blend-multiply">
+            <div class="status-bar"><span>9:41</span><span><i class="fa-solid fa-battery-full"></i></span></div>
+            <div class="flex-1 flex flex-col items-center justify-center mt-20">
+                <div class="w-40 h-40 rounded-full bg-green-200 border-4 border-white"></div>
+            </div>
+        </div>
+
+        <!-- 遮罩 -->
+        <div class="absolute inset-0 bg-black/40 z-10"></div>
+
+        <!-- 底部弹窗 -->
+        <div class="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl z-20 flex flex-col h-2/3 shadow-2xl">
+            <div class="flex justify-center pt-3 pb-2">
+                <div class="w-12 h-1.5 bg-gray-200 rounded-full"></div>
+            </div>
+            <div class="px-5 py-3 flex justify-between items-center border-b border-gray-100">
+                <h3 class="font-bold text-gray-800 text-lg">选择AI老师</h3>
+                <i class="fa-solid fa-xmark text-gray-400 p-1"></i>
+            </div>
+            <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
+                <!-- 老师1 选中 -->
+                <div class="flex items-center gap-4 p-3 rounded-2xl border-2 border-green-500 bg-green-50/50 relative">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=TeacherJane&backgroundColor=b6e3f4"
+                        class="w-14 h-14 rounded-full bg-white border shadow-sm">
+                    <div class="flex-1">
+                        <div class="font-bold text-gray-900">Jane 老师</div>
+                        <div class="text-xs text-gray-500 mt-1">✨ 生动活泼，通俗易懂</div>
+                    </div>
+                    <div
+                        class="w-6 h-6 rounded-full bg-green-500 text-white flex items-center justify-center text-xs shadow-sm">
+                        <i class="fa-solid fa-check"></i>
+                    </div>
+                </div>
+                <!-- 老师2 -->
+                <div class="flex items-center gap-4 p-3 rounded-2xl border border-gray-100 bg-white shadow-sm">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=TeacherBob&backgroundColor=ffdfbf"
+                        class="w-14 h-14 rounded-full bg-white border shadow-sm">
+                    <div class="flex-1">
+                        <div class="font-bold text-gray-900">Bob 老师</div>
+                        <div class="text-xs text-gray-500 mt-1">🧐 逻辑清晰，直击要难</div>
+                    </div>
+                    <div class="w-6 h-6 rounded-full border border-gray-200"></div>
+                </div>
+                <!-- 老师3 -->
+                <div class="flex items-center gap-4 p-3 rounded-2xl border border-gray-100 bg-white shadow-sm">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=TeacherEmma&backgroundColor=c0aede"
+                        class="w-14 h-14 rounded-full bg-white border shadow-sm">
+                    <div class="flex-1">
+                        <div class="font-bold text-gray-900">Emma 老师</div>
+                        <div class="text-xs text-gray-500 mt-1">❤️ 温柔耐心，循循善诱</div>
+                    </div>
+                    <div class="w-6 h-6 rounded-full border border-gray-200"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4.1 次数用完弹窗 -->
+    <div id="limit-modal" class="device bg-green-50 relative">
+        <div class="absolute inset-0 opacity-40 mix-blend-multiply flex flex-col">
+            <div class="status-bar"><span>9:41</span></div>
+            <div class="flex-1 flex flex-col items-center justify-center">
+                <div class="w-40 h-40 rounded-full bg-green-200"></div>
+            </div>
+        </div>
+        <div class="absolute inset-0 bg-black/60 z-10 flex items-center justify-center p-6">
+            <div
+                class="bg-white rounded-2xl p-6 w-full shadow-2xl transform scale-100 text-center relative overflow-hidden">
+                <div
+                    class="absolute top-0 left-0 right-0 h-16 bg-red-50 flex items-center justify-center text-red-400 text-4xl opacity-50">
+                    <i class="fa-solid fa-clock"></i>
+                </div>
+                <div
+                    class="w-14 h-14 mx-auto bg-red-100 rounded-full flex items-center justify-center text-red-500 text-2xl mb-4 relative z-10 shadow-sm">
+                    <i class="fa-solid fa-xmark"></i>
+                </div>
+                <h3 class="font-bold text-gray-900 text-lg mb-2 relative z-10">今日次数已用完</h3>
+                <p class="text-gray-500 text-sm mb-6 relative z-10">每天可免费使用 5 次AI名师讲题<br>明天再来吧！</p>
+                <button
+                    class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-3 rounded-xl transition-colors relative z-10">我知道了</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4.2 高端机拍照 (相机页) -->
+    <div id="camera" class="device bg-black text-white relative">
+        <div class="status-bar text-white"><span>9:41</span><span><i class="fa-solid fa-battery-full"></i></span></div>
+        <div class="flex justify-between items-center p-4 z-10 relative">
+            <i class="fa-solid fa-xmark text-xl"></i>
+            <i class="fa-solid fa-bolt text-lg"></i>
+        </div>
+        <!-- 相机取景画面 mock -->
+        <div class="absolute inset-0">
+            <img src="https://images.unsplash.com/photo-1633613286848-f6ee85cbce1d?auto=format&fit=crop&q=80&w=600"
+                class="w-full h-full object-cover opacity-60 grayscale blur-[1px]">
+        </div>
+        <!-- 引导框 -->
+        <div class="absolute inset-0 flex flex-col items-center justify-center z-10 pointer-events-none">
+            <div class="bg-black/50 px-4 py-2 rounded-full text-sm backdrop-blur-sm mb-6 shadow-lg">请将题目对准框内，保持清晰</div>
+            <div class="w-64 h-48 border border-white/80 rounded-lg relative shadow-[0_0_0_9999px_rgba(0,0,0,0.4)]">
+                <!-- 边角 -->
+                <div class="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-green-400 rounded-tl"></div>
+                <div class="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-green-400 rounded-tr"></div>
+                <div class="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-green-400 rounded-bl"></div>
+                <div class="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-green-400 rounded-br"></div>
+            </div>
+        </div>
+        <!-- 底部操作 -->
+        <div
+            class="absolute bottom-0 left-0 right-0 p-8 z-10 flex items-center justify-between pb-10 bg-gradient-to-t from-black/80 to-transparent">
+            <div
+                class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center overflow-hidden border border-white/30 backdrop-blur-sm">
+                <i class="fa-regular fa-image text-white"></i>
+            </div>
+            <div
+                class="w-16 h-16 rounded-full border-4 border-white/50 flex items-center justify-center p-1 cursor-pointer">
+                <div class="w-full h-full bg-white rounded-full"></div>
+            </div>
+            <div class="w-12"></div><!-- 占位保持居中 -->
+        </div>
+    </div>
+
+    <!-- 4.3 低端机上传 (主页差异) -->
+    <div id="low-end" class="device bg-green-50">
+        <div class="status-bar"><span>9:41</span></div>
+        <div class="flex justify-between items-center px-4 py-2 opacity-50"><i class="fa-solid fa-chevron-left"></i>
+        </div>
+        <div class="flex-1 flex flex-col items-center justify-center px-4">
+            <div class="w-32 h-32 rounded-full bg-green-200 mb-4 opacity-50"></div>
+            <h2 class="text-xl font-bold text-gray-500">老师形象区</h2>
+        </div>
+        <!-- 底部不同点 -->
+        <div class="pb-8 pt-4 px-6 bg-white rounded-t-3xl shadow-[0_-10px_20px_rgba(0,0,0,0.02)]">
+            <button
+                class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg flex items-center justify-center gap-2 text-lg">
+                <i class="fa-regular fa-images"></i> 上传题目照片
+            </button>
+            <p class="text-center text-xs text-gray-500 mt-3 pt-2">当前设备建议使用系统相册选取照片</p>
+        </div>
+    </div>
+
+    <!-- 5.1 Loading态 -->
+    <div id="loading" class="device bg-gray-50">
+        <div class="status-bar"><span>9:41</span></div>
+        <div class="flex-1 flex flex-col items-center justify-center px-6">
+            <div class="relative w-24 h-24 mb-6">
+                <!-- 涟漪动画背景 -->
+                <div class="absolute inset-0 bg-green-200 rounded-full animate-ping opacity-75"></div>
+                <div class="absolute inset-0 bg-green-300 rounded-full animate-ping opacity-50 animation-delay-300">
+                </div>
+                <div
+                    class="relative w-full h-full rounded-full border-2 border-white overflow-hidden shadow-lg bg-white relative z-10 p-1">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=TeacherJane&backgroundColor=b6e3f4"
+                        class="w-full h-full object-cover rounded-full bg-blue-50">
+                </div>
+            </div>
+            <h3 class="text-lg font-bold text-gray-800 animate-pulse">老师正在看题中...</h3>
+            <p class="text-sm text-gray-400 mt-2 text-center">正在识别题目内容，马上就好</p>
+
+            <div class="w-48 h-15 mt-8 border rounded-lg overflow-hidden relative shadow-sm opacity-50">
+                <img src="https://images.unsplash.com/photo-1633613286848-f6ee85cbce1d?auto=format&fit=crop&q=80&w=600"
+                    class="w-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-b from-transparent to-black/30"></div>
+                <!-- 扫描线 -->
+                <div
+                    class="absolute left-0 right-0 h-1 bg-green-400 shadow-[0_0_8px_green] animate-[bounce_2s_infinite]">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5.2 成功-有结果 -->
+    <div id="result-success" class="device bg-gray-50">
+        <div class="status-bar bg-white"><span>9:41</span></div>
+        <div class="flex justify-between items-center px-4 py-3 bg-white border-b sticky top-0 z-20">
+            <i class="fa-solid fa-chevron-left text-gray-700"></i>
+            <h1 class="font-bold text-gray-800 text-lg">AI 讲解</h1>
+            <i class="fa-solid fa-share-nodes text-gray-700"></i>
+        </div>
+
+        <div class="flex-1 overflow-y-auto pb-6">
+            <!-- 原图 -->
+            <div class="m-4 bg-white p-2 rounded-xl border shadow-sm flex gap-3 relative overflow-hidden">
+                <div class="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                    <img src="https://images.unsplash.com/photo-1633613286848-f6ee85cbce1d?auto=format&fit=crop&q=80&w=200"
+                        class="w-full h-full object-cover">
+                </div>
+                <div class="flex flex-col justify-center">
+                    <span
+                        class="bg-blue-100 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded shadow-sm self-start mb-1">数学</span>
+                    <p class="text-xs text-gray-500 line-clamp-2">已知函数 f(x)=x^2+2x-3, 求函数的值域和单调区间...</p>
+                </div>
+                <div
+                    class="absolute right-0 bottom-0 bg-black/50 text-white p-1 rounded-tl-lg text-[10px] backdrop-blur">
+                    <i class="fa-solid fa-expand"></i>
+                </div>
+            </div>
+
+            <!-- 语音讲解 -->
+            <div
+                class="mx-4 mt-2 px-4 py-4 bg-white rounded-2xl shadow-sm border border-green-100 mb-4 flex items-center gap-4 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-green-50 rounded-bl-full -z-10 opacity-50"></div>
+                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=TeacherJane&backgroundColor=b6e3f4"
+                    class="w-12 h-12 rounded-full border border-gray-100 shadow-sm bg-blue-50">
+                <div class="flex-1">
+                    <div class="text-sm font-bold text-gray-800 mb-2 flex items-center justify-between">
+                        Jane 老师讲解中
+                        <span class="text-xs font-normal text-gray-400">00:15 / 02:30</span>
+                    </div>
+                    <!-- 播放条 -->
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-circle-pause text-green-500 text-2xl drop-shadow-sm"></i>
+                        <div class="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                            <div class="w-1/4 h-full bg-green-500 rounded-full"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 文字解析 -->
+            <div class="mx-4 bg-white rounded-2xl shadow-sm border p-5">
+                <h3 class="flex items-center gap-2 font-bold text-gray-800 text-base mb-4">
+                    <div class="w-1 h-4 bg-green-500 rounded-full"></div>
+                    解题思路
+                </h3>
+                <div class="text-sm text-gray-700 leading-relaxed space-y-4">
+                    <div class="pb-3 border-b border-gray-50 border-dashed">
+                        <span class="font-bold text-green-600 mr-1">第一步：</span>
+                        这道题考察的是二次函数的基本性质。我们需要先把函数转化为顶点式。
+                    </div>
+                    <div class="pb-3 border-b border-gray-50 border-dashed">
+                        <span class="font-bold text-green-600 mr-1">第二步：</span>
+                        <div
+                            class="bg-gray-50 p-3 rounded font-mono text-center my-2 text-gray-800 shadow-inner text-xs">
+                            f(x) = x² + 2x - 3<br>
+                            = (x + 1)² - 4
+                        </div>
+                    </div>
+                    <div>
+                        <span class="font-bold text-green-600 mr-1">第三步：</span>
+                        因此，函数的顶点坐标为 (-1, -4)，开口向上。值域为 [-4, +∞)。
+                    </div>
+                </div>
+            </div>
+
+            <!-- 底部占位 -->
+            <div class="h-24"></div>
+        </div>
+
+        <!-- 底部固定栏 -->
+        <div
+            class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-white via-white to-transparent pt-8 text-center flex gap-3">
+            <button
+                class="flex-1 bg-green-50 border border-green-200 text-green-600 font-bold py-3 rounded-xl">分享讲解</button>
+            <button
+                class="flex-1 bg-green-500 text-white font-bold py-3 rounded-xl shadow-lg shadow-green-200">再拍一题</button>
+        </div>
+    </div>
+
+    <!-- 5.4 失败-图片不清晰 (代表异常态) -->
+    <div id="error-unclear" class="device bg-gray-50">
+        <div class="status-bar"><span>9:41</span></div>
+        <div class="flex justify-between items-center px-4 py-2 border-b bg-white">
+            <i class="fa-solid fa-chevron-left text-gray-700"></i>
+            <h1 class="font-bold text-gray-800 text-sm">AI 讲解</h1>
+            <div class="w-4"></div>
+        </div>
+        <div class="flex-1 flex flex-col items-center justify-center px-6">
+            <div class="w-24 h-24 mb-6 bg-red-50 rounded-full flex items-center justify-center p-2 relative">
+                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=TeacherJane&backgroundColor=b6e3f4"
+                    class="w-full h-full rounded-full grayscale opacity-80">
+                <div
+                    class="absolute -bottom-2 -right-2 bg-red-500 text-white w-8 h-8 rounded-full border-2 border-white flex items-center justify-center text-sm shadow-sm">
+                    <i class="fa-solid fa-question"></i>
+                </div>
+            </div>
+            <h3 class="text-lg font-bold text-gray-800 mb-2">图片不太清晰</h3>
+            <p class="text-sm text-gray-500 text-center mb-8">老师看不清楚题目哦，请确保题目完整、光线充足、文字清晰。</p>
+            <div class="w-full flex gap-3">
+                <button
+                    class="flex-1 py-3 bg-white border border-gray-200 rounded-xl text-gray-700 font-bold shadow-sm">相册选择</button>
+                <button
+                    class="flex-1 py-3 bg-green-500 text-white rounded-xl font-bold shadow-md shadow-green-200">重新拍照</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6.1 答疑历史 -->
+    <div id="history" class="device bg-gray-50">
+        <div class="status-bar bg-white"><span>9:41</span></div>
+        <div class="flex justify-between items-center px-4 py-3 bg-white border-b sticky top-0 z-10">
+            <i class="fa-solid fa-chevron-left text-gray-700"></i>
+            <h1 class="font-bold text-gray-800 pl-4 text-lg">答疑历史</h1>
+            <div class="w-4"></div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-4 space-y-3">
+            <!-- item 1 -->
+            <div
+                class="bg-white p-3 rounded-xl border border-gray-100 flex gap-3 shadow-sm hover:shadow active:bg-gray-50 transition-colors">
+                <div class="w-16 h-16 bg-gray-100 rounded flex-shrink-0 overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1633613286848-f6ee85cbce1d?auto=format&fit=crop&q=80&w=200"
+                        class="w-full h-full object-cover">
+                </div>
+                <div class="flex flex-col flex-1 justify-between py-0.5">
+                    <div>
+                        <div class="flex justify-between items-start mb-1">
+                            <span
+                                class="bg-blue-100 text-blue-600 text-[10px] font-bold px-1.5 py-0.5 rounded shadow-[0_1px_2px_rgba(0,0,0,0.05)]">数学</span>
+                            <span class="text-xs text-gray-400">昨天 14:30</span>
+                        </div>
+                        <p class="text-xs text-gray-600 line-clamp-2">已知函数 f(x)=x^2+2x-3, 求...</p>
+                    </div>
+                    <div class="flex items-center gap-1.5 mt-2">
+                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=TeacherJane&backgroundColor=b6e3f4"
+                            class="w-4 h-4 rounded-full border border-gray-200 bg-white">
+                        <span class="text-[10px] text-gray-500 font-medium">Jane 老师讲解</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- item 2 -->
+            <div
+                class="bg-white p-3 rounded-xl border border-gray-100 flex gap-3 shadow-sm hover:shadow active:bg-gray-50 transition-colors">
+                <div class="w-16 h-16 bg-gray-100 rounded flex-shrink-0 overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1596495578065-6e0763fa1178?auto=format&fit=crop&q=80&w=200"
+                        class="w-full h-full object-cover">
+                </div>
+                <div class="flex flex-col flex-1 justify-between py-0.5">
+                    <div>
+                        <div class="flex justify-between items-start mb-1">
+                            <span
+                                class="bg-orange-100 text-orange-600 text-[10px] font-bold px-1.5 py-0.5 rounded shadow-[0_1px_2px_rgba(0,0,0,0.05)]">语文</span>
+                            <span class="text-xs text-gray-400">03-02 20:15</span>
+                        </div>
+                        <p class="text-xs text-gray-600 line-clamp-2">阅读下面这首唐诗，回答问题...</p>
+                    </div>
+                    <div class="flex items-center gap-1.5 mt-2">
+                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=TeacherEmma&backgroundColor=c0aede"
+                            class="w-4 h-4 rounded-full border border-gray-200 bg-white">
+                        <span class="text-[10px] text-gray-500 font-medium">Emma 老师讲解</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple router to show selected device based on hash
+        function updateView() {
+            document.querySelectorAll('.device').forEach(el => el.classList.remove('active'));
+            const hash = window.location.hash.slice(1) || 'home';
+            const target = document.getElementById(hash);
+            if (target) {
+                target.classList.add('active');
+            } else {
+                document.getElementById('home').classList.add('active');
+            }
+        }
+
+        window.addEventListener('hashchange', updateView);
+        updateView();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>题目作答模块 - 需求详情</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+            line-height: 1.8;
+            color: #333;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 24px;
+            background: #fff;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin: 32px 0 24px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #333;
+        }
+
+        h2 {
+            font-size: 22px;
+            font-weight: 700;
+            margin: 40px 0 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e0e0e0;
+            color: #1a1a1a;
+        }
+
+        h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 28px 0 12px;
+            color: #333;
+        }
+
+        p {
+            margin: 8px 0;
+        }
+
+        ul,
+        ol {
+            margin: 8px 0 8px 24px;
+        }
+
+        li {
+            margin: 4px 0;
+        }
+
+        strong {
+            font-weight: 600;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0 20px;
+            font-size: 14px;
+            table-layout: fixed;
+        }
+
+        th {
+            background: #f5f7fa;
+            font-weight: 600;
+            text-align: left;
+            padding: 10px 12px;
+            border: 1px solid #e0e0e0;
+            overflow: auto;
+            resize: horizontal;
+            word-break: break-all;
+        }
+
+        td {
+            padding: 10px 12px;
+            border: 1px solid #e0e0e0;
+            vertical-align: top;
+            overflow: hidden;
+            word-break: break-word;
+        }
+
+        th:nth-child(1),
+        td:nth-child(1) {
+            width: 100px;
+        }
+
+        th:nth-child(2),
+        td:nth-child(2) {
+            width: 100px;
+        }
+
+        th:nth-child(3),
+        td:nth-child(3) {
+            width: 350px;
+        }
+
+        .alert {
+            margin: 16px 0;
+            padding: 12px 16px;
+            border-left: 4px solid #e6a700;
+            background: #fffbe6;
+            border-radius: 0 8px 8px 0;
+            font-size: 14px;
+        }
+
+        code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 13px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>题目作答模块 — 需求详情</h1>
+    <p style="color: #888; font-size: 14px;">所属产品：微信小程序 &nbsp;|&nbsp; 模块类型：子模块 &nbsp;|&nbsp; 版本：V1.0</p>
+
+    <hr>
+
+    <!-- 一、流程图 -->
+    <h2>一、作答流程图</h2>
+
+    <iframe src="../流程图/题目作答-flow.html"
+        style="width: 100%; height: 1600px; border: none; background: transparent;"></iframe>
+
+    <hr>
+
+    <!-- 二、详细方案 -->
+    <h2>二、详细方案</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 90px; min-width: 90px;">一级模块</th>
+                <th style="width: 100px; min-width: 100px;">二级功能</th>
+                <th style="width: 350px; min-width: 260px;">原型</th>
+                <th>描述</th>
+            </tr>
+        </thead>
+        <tbody>
+
+            <!-- ========== 答题通用 ========== -->
+            <tr>
+                <td rowspan="2"><strong>答题通用</strong></td>
+                <td>题组加载</td>
+                <td>
+                    <iframe src="../原型/题目作答-prototype.html#math-handwrite"
+                        style="width: 100%; height: 570px; border: none; background: transparent;"></iframe>
+                </td>
+                <td>
+                    <p><strong>0、功能说明</strong></p>
+                    <ul>
+                        <li>题目以"组"为单位下发，进入答题页时一次性拉取整组题目数据</li>
+                        <li>一组题可混合多种题型（口算/选择/朗读）</li>
+                    </ul>
+                    <p><strong>1、页面通用元素</strong></p>
+                    <ul>
+                        <li><strong>顶部导航</strong>：左侧关闭按钮（X） + 中间题型标签（蓝/橙/绿色区分）</li>
+                        <li><strong>进度条</strong>：显示"第 N/M 题" + 百分比 + 渐变色进度条</li>
+                        <li><strong>底部操作</strong>：上一题（灰色）+ 下一题/提交（主色）</li>
+                    </ul>
+                    <p><strong>2、导航规则</strong></p>
+                    <ul>
+                        <li>第一题时"上一题"按钮置灰不可点</li>
+                        <li>最后一题按钮文案改为"提交"</li>
+                        <li>支持前后翻页，可修改已答题目</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td>退出确认</td>
+                <td></td>
+                <td>
+                    <p><strong>0、功能说明</strong></p>
+                    <ul>
+                        <li>点击左上角 X 时弹出确认弹窗</li>
+                    </ul>
+                    <p><strong>1、弹窗内容</strong></p>
+                    <ul>
+                        <li>标题："确定退出练习吗？"</li>
+                        <li>描述："退出后本次作答记录不会保存"</li>
+                        <li>按钮："继续答题"（主色）/ "退出"（灰色）</li>
+                    </ul>
+                </td>
+            </tr>
+
+            <!-- ========== 数学口算 ========== -->
+            <tr>
+                <td rowspan="2"><strong>数学-口算题</strong></td>
+                <td>手写作答</td>
+                <td>
+                    <iframe src="../原型/题目作答-prototype.html#math-handwrite"
+                        style="width: 100%; height: 570px; border: none; background: transparent;"></iframe>
+                </td>
+                <td>
+                    <p><strong>0、功能说明</strong></p>
+                    <ul>
+                        <li>学生在Canvas手写区用手指书写数字答案</li>
+                    </ul>
+                    <p><strong>1、题目区</strong></p>
+                    <ul>
+                        <li>居中大字号展示算式，未作答部分显示蓝色"?"占位</li>
+                        <li>题目类型：加减乘除，一位数到三位数运算</li>
+                    </ul>
+                    <p><strong>2、手写区</strong></p>
+                    <ul>
+                        <li>Canvas画布区域，带虚线边框和浅灰辅助网格</li>
+                        <li>右上角"清除"按钮，点击清空画布内容</li>
+                        <li>笔迹粗细：3px，颜色：深灰 #374151</li>
+                        <li>支持多笔画书写，每次落笔即追加</li>
+                    </ul>
+                    <p><strong>3、识别规则</strong></p>
+                    <ul>
+                        <li>点击"下一题"时触发本地手写识别，将笔迹转为数字</li>
+                        <li>识别结果暂存本地，不立即判对错</li>
+                        <li>若无法识别，提示"请重新书写，确保数字清晰"</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td>识别失败兜底</td>
+                <td></td>
+                <td>
+                    <p><strong>0、触发条件</strong></p>
+                    <ul>
+                        <li>手写内容无法被识别为有效数字（乱画/过于潦草）</li>
+                    </ul>
+                    <p><strong>1、处理方式</strong></p>
+                    <ul>
+                        <li>底部弹出轻提示toast："字迹不太清楚，请重新书写哦"</li>
+                        <li>不自动清除画布，学生可手动清除后重写</li>
+                        <li>连续3次识别失败，弹出数字键盘输入兜底</li>
+                    </ul>
+                </td>
+            </tr>
+
+            <!-- ========== 语文选择题 ========== -->
+            <tr>
+                <td><strong>语文-选择题</strong></td>
+                <td>选项作答</td>
+                <td>
+                    <iframe src="../原型/题目作答-prototype.html#chinese-choice"
+                        style="width: 100%; height: 570px; border: none; background: transparent;"></iframe>
+                </td>
+                <td>
+                    <p><strong>0、功能说明</strong></p>
+                    <ul>
+                        <li>标准单选题，点击选项即选中</li>
+                    </ul>
+                    <p><strong>1、题目区</strong></p>
+                    <ul>
+                        <li>题干文字黑色正文展示，支持富文本（加粗/下划线标注考查字词）</li>
+                    </ul>
+                    <p><strong>2、选项区</strong></p>
+                    <ul>
+                        <li>每个选项为卡片式布局：圆形字母标记（A/B/C/D）+ 选项内容</li>
+                        <li><strong>未选中</strong>：白色背景 + 浅灰边框，字母圆圈灰色</li>
+                        <li><strong>选中</strong>：浅蓝背景 + 蓝色粗边框 + 字母圆圈变蓝底白字 + 右上角蓝色勾</li>
+                        <li>点击另一选项切换选中态（单选）</li>
+                    </ul>
+                    <p><strong>3、交互规则</strong></p>
+                    <ul>
+                        <li>未选择答案时点击"下一题"，弹出toast："请先选择一个答案"</li>
+                        <li>已选答案暂存本地，返回该题时恢复选中状态</li>
+                    </ul>
+                </td>
+            </tr>
+
+            <!-- ========== 语音朗读 ========== -->
+            <tr>
+                <td rowspan="3"><strong>语音朗读题</strong></td>
+                <td>待录音态</td>
+                <td>
+                    <iframe src="../原型/题目作答-prototype.html#voice-idle"
+                        style="width: 100%; height: 570px; border: none; background: transparent;"></iframe>
+                </td>
+                <td>
+                    <p><strong>0、功能说明</strong></p>
+                    <ul>
+                        <li>展示待朗读文本，学生需朗读后由AI评分</li>
+                    </ul>
+                    <p><strong>1、朗读内容区</strong></p>
+                    <ul>
+                        <li>黄底卡片展示朗读文本，大字号、宽行距便于阅读</li>
+                        <li>可展示拼音标注（针对低年级）</li>
+                        <li>底部显示出处（作者/来源）</li>
+                    </ul>
+                    <p><strong>2、示范朗读</strong></p>
+                    <ul>
+                        <li>提供"听示范朗读"播放器，学生可先听一遍标准发音</li>
+                        <li>播放器含：播放按钮 + 进度条 + 时长</li>
+                    </ul>
+                    <p><strong>3、录音入口</strong></p>
+                    <ul>
+                        <li>底部居中大圆按钮（绿色麦克风图标）</li>
+                        <li>提示文案："点击下方按钮开始录音 / 请在安静环境下录音"</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td>录音中态</td>
+                <td>
+                    <iframe src="../原型/题目作答-prototype.html#voice-read"
+                        style="width: 100%; height: 570px; border: none; background: transparent;"></iframe>
+                </td>
+                <td>
+                    <p><strong>0、状态变化</strong></p>
+                    <ul>
+                        <li>点击录音按钮后进入录音中状态</li>
+                    </ul>
+                    <p><strong>1、页面展示</strong></p>
+                    <ul>
+                        <li>波形动画：7根竖条随声音振幅动态跳动</li>
+                        <li>录音计时器：显示"录音中... 00:XX"</li>
+                        <li>提示："请大声、清晰地朗读"</li>
+                    </ul>
+                    <p><strong>2、底部操作</strong></p>
+                    <ul>
+                        <li>中央：红色停止按钮（由绿色录音切换而来）</li>
+                        <li>左侧：重录按钮（清除当前录音重新开始）</li>
+                        <li>右侧：下一题按钮（录音中时置灰不可点）</li>
+                    </ul>
+                    <p><strong>3、录音规则</strong></p>
+                    <ul>
+                        <li>最长录音时间：60秒，到时自动停止</li>
+                        <li>最短有效时长：2秒，不足则提示"录音太短了"</li>
+                        <li>静音检测：连续5秒无声音输入，自动停止并提示</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td>录音完成</td>
+                <td></td>
+                <td>
+                    <p><strong>0、状态变化</strong></p>
+                    <ul>
+                        <li>点击停止 / 自动到时停止后进入此状态</li>
+                    </ul>
+                    <p><strong>1、页面展示</strong></p>
+                    <ul>
+                        <li>波形静止，显示"录音完成 ✅"</li>
+                        <li>可点击回放按钮试听自己的录音</li>
+                    </ul>
+                    <p><strong>2、操作</strong></p>
+                    <ul>
+                        <li>"重录"：清除本次录音，回到待录音态</li>
+                        <li>"下一题"：可用，暂存音频到本地</li>
+                    </ul>
+                </td>
+            </tr>
+
+            <!-- ========== 结果页 ========== -->
+            <tr>
+                <td rowspan="2"><strong>练习报告</strong></td>
+                <td>结果汇总</td>
+                <td>
+                    <iframe src="../原型/题目作答-prototype.html#result"
+                        style="width: 100%; height: 570px; border: none; background: transparent;"></iframe>
+                </td>
+                <td>
+                    <p><strong>0、功能说明</strong></p>
+                    <ul>
+                        <li>全部题目提交后，显示练习报告汇总页</li>
+                    </ul>
+                    <p><strong>1、成绩卡片</strong></p>
+                    <ul>
+                        <li>圆形大字号总分（百分制）</li>
+                        <li>评语标签（根据分数段）：≥90 "太棒了🌟" / ≥70 "不错哦👍" / ≥60 "继续加油💪" / <60 "再接再厉📚" </li>
+                        <li>四项统计：答对数 / 答错数 / 总题数 / 用时</li>
+                    </ul>
+                    <p><strong>2、答题明细列表</strong></p>
+                    <ul>
+                        <li>逐题展示：题号 + 题型标签 + 题目摘要 + 对错状态</li>
+                        <li>正确：绿色勾 + "正确"</li>
+                        <li>错误：红色叉 + "错误"，整行浅红底色</li>
+                        <li>朗读题：显示AI评分（如"92分"），而非简单对错</li>
+                        <li>点击错题行可跳转错题详情页</li>
+                    </ul>
+                    <p><strong>3、底部操作</strong></p>
+                    <ul>
+                        <li>"查看错题"：跳转错题集页面</li>
+                        <li>"完成"：返回上级页面</li>
+                    </ul>
+                    <p><strong>4、数据上报</strong></p>
+                    <ul>
+                        <li>提交后服务端保存本次练习记录</li>
+                        <li>语音朗读的音频文件上传后由AI异步评分</li>
+                    </ul>
+                </td>
+            </tr>
+            <tr>
+                <td>错题详情</td>
+                <td>
+                    <iframe src="../原型/题目作答-prototype.html#wrong-detail"
+                        style="width: 100%; height: 570px; border: none; background: transparent;"></iframe>
+                </td>
+                <td>
+                    <p><strong>0、功能说明</strong></p>
+                    <ul>
+                        <li>从结果页点击错题进入，展示该题的详细对比</li>
+                    </ul>
+                    <p><strong>1、页面内容</strong></p>
+                    <ul>
+                        <li>原题展示 + 题型标签 + 错误标记</li>
+                        <li>并排对比：学生答案（红色）vs 正确答案（绿色）</li>
+                        <li>提示卡片（黄底）：解释错误原因或学习提示</li>
+                    </ul>
+                    <p><strong>2、操作</strong></p>
+                    <ul>
+                        <li>"下一道错题"：翻到下一道错题</li>
+                        <li>最后一道错题时按钮变为"返回报告"</li>
+                    </ul>
+                </td>
+            </tr>
+
+        </tbody>
+    </table>
+
+    <div class="alert"><strong>⚠️ 评分规则：</strong>口算题和选择题由服务端直接判分（对/错）；语音朗读题上传音频后由AI评分服务异步打分（0-100分），朗读评分≥60分视为"通过"。</div>
+
+</body>
+
+</html>
