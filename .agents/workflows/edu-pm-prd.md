@@ -194,6 +194,28 @@ description: 教育PM需求产出工作流 — 输入需求描述，产出PRD+�
 
 ## 步骤五：交付与评审
 
+### 5.0 可选：导出PNG截图，便于直接粘贴文档
+
+如果评审场景更偏向「直接把图片贴到钉钉/飞书文档」，可以在保留 HTML 交付物的同时，额外导出 PNG：
+
+```bash
+# 导出单张原型图
+./scripts/export-html-to-png.sh "原型/[需求名]-prototype.html#home" "导出PNG/[需求名]/home.png" --width 320 --height 568 --delay 2500
+
+# 批量导出整个原型文件中的所有 hash 页面
+node ./scripts/export-prototype-pngs.mjs "原型/[需求名]-prototype.html"
+
+# 导出流程图
+./scripts/export-html-to-png.sh "流程图/[需求名]-flow.html" "导出PNG/[需求名]-flow.png" --width 1400 --height 1200 --delay 4000 --full-page
+```
+
+说明：
+- HTML 仍然是主交付物，PNG 是补充物，方便复制粘贴到文档系统
+- 当前样例原型/流程图使用 CDN 资源，导出 PNG 时建议保持联网
+- 脚本默认调用本机 Chrome headless；如果浏览器路径不同，可通过 `CHROME_BIN` 环境变量覆盖
+- 长页面导出依赖 `--height` 参数，建议根据实际页面长度调大
+- 若要实现稳定的完全离线导出，需要将 Tailwind / Font Awesome / Mermaid 改为本地资源或内嵌
+
 ### 5.1 交付格式
 
 | 产出物 | 生成格式 | 交付方式 |
@@ -201,6 +223,7 @@ description: 教育PM需求产出工作流 — 输入需求描述，产出PRD+�
 | **PRD文档** | HTML (.html) | 浏览器打开，直接截图到钉钉；或复制页面内容粘贴 |
 | **原型** | HTML (.html) | 已内嵌在PRD的iframe中；也可单独提供文件 |
 | **流程图** | HTML (.html) | 已内嵌在PRD的iframe中；也可单独提供文件 |
+| **原型截图 / 流程图截图** | PNG (.png) | 适合直接复制粘贴到钉钉/飞书/需求文档 |
 
 > **交付到钉钉的方式：**
 > 在浏览器中打开 PRD HTML 文件，对需要的部分用截图工具（Mac: `Cmd+Ctrl+Shift+4`）截图，然后直接 `Cmd+V` 粘贴到钉钉文档。
