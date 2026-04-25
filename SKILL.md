@@ -52,6 +52,8 @@ Confirm the following structure has been created:
 - `.agents/workflows/edu-pm-acceptance.md` (acceptance checklist)
 - `.agents/workflows/edu-pm-data-analysis.md` (data analysis)
 - `关键点.md` (version history)
+- `scripts/prototype_server.py` and `scripts/prototype-export-client.js` (real-render PNG export)
+- `启动原型导出服务.command` (local export service launcher)
 - Empty output directories: `需求文档/`, `原型/`, `原型截图/`, `流程图/`, `数据分析/`, `验收清单/`, `需求挖掘/`, `.handoff/`
 
 ### Step 3: Report
@@ -103,7 +105,7 @@ Step 2: Generate PRD (HTML)
 Step 3: Generate Prototype (HTML)
   → Single-file, hash-routed interactive prototype
   → Tiled view (all pages) + Single page view (per hash)
-  → One-click PNG export built-in
+  → One-click PNG export via local Playwright service
   → [Optional] Pencil high-fidelity design enhancement
 
 Step 4: Generate Flowchart (HTML)
@@ -135,6 +137,10 @@ YourProject/
 │   └── [Feature].pen         # (optional, Pencil source)
 ├── 原型截图/                  # Exported prototype screenshots
 │   └── [Feature]-[Page].png
+├── scripts/                   # Export service + helper scripts
+│   ├── prototype_server.py
+│   └── prototype-export-client.js
+├── 启动原型导出服务.command      # macOS launcher for PNG export service
 ├── 流程图/                    # Flowcharts
 │   └── [Feature]-flow.html
 ├── 数据分析/                  # Data analysis reports

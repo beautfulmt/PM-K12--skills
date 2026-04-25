@@ -78,7 +78,22 @@ safe_copy "${ASSETS_DIR}/templates/关键点.md"                  "关键点.md"
 safe_copy "${ASSETS_DIR}/templates/pencil-draw-prompt.md"     "scripts/pencil-draw-prompt.md"
 safe_copy "${ASSETS_DIR}/config/mcp.json.example"             ".mcp.json.example"
 
-# --- Step 4: Add .gitkeep to empty directories ---
+# --- Step 4: Install prototype export service files ---
+echo ""
+echo "📸 Installing prototype export service..."
+
+safe_copy "${ASSETS_DIR}/scripts/prototype_server.py"              "scripts/prototype_server.py"
+safe_copy "${ASSETS_DIR}/scripts/prototype-export-client.js"       "scripts/prototype-export-client.js"
+safe_copy "${ASSETS_DIR}/scripts/setup_prototype_export_watcher.sh" "scripts/setup_prototype_export_watcher.sh"
+safe_copy "${ASSETS_DIR}/scripts/启动原型导出服务.command"          "启动原型导出服务.command"
+
+chmod +x "scripts/setup_prototype_export_watcher.sh" "启动原型导出服务.command" 2>/dev/null || true
+
+if [ "$(uname -s)" = "Darwin" ] && [ "${EDU_PM_SKIP_EXPORT_WATCHER:-0}" != "1" ]; then
+    bash "scripts/setup_prototype_export_watcher.sh" "$(pwd)" || echo "  ⚠️  Export watcher install skipped; double-click 启动原型导出服务.command when needed."
+fi
+
+# --- Step 5: Add .gitkeep to empty directories ---
 echo ""
 echo "📌 Adding .gitkeep to empty directories..."
 
