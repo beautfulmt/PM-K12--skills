@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "pencil": {
+      "command": "/Users/tnt/.pencil/mcp/claudeCodeCLI/out/mcp-server-darwin-arm64",
+      "args": ["--app", "claudeCodeCLI", "-enable_spawn_agents"]
+    }
+  }
+}
