@@ -1,5 +1,6 @@
 (function () {
   var SERVER = window.PROTOTYPE_EXPORT_SERVER || 'http://localhost:8765';
+  var LAUNCHER = window.PROTOTYPE_EXPORT_LAUNCHER || 'http://localhost:8766';
   var running = false;
 
   function isExportButton(target) {
@@ -50,19 +51,53 @@
     return response.json();
   }
 
+  async function tryLaunchViaLauncher(button) {
+    // 通过 launcher 唤起完整导出服务（仅本地 8766 端口转发到 .command）
+    try {
+      setButton(button, '正在唤起导出服务...', undefined, true);
+      var resp = await fetch(LAUNCHER + '/api/launch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}'
+      });
+      if (!resp.ok) return false;
+      var data = await resp.json().catch(function () { return {}; });
+      return !!data.ok;
+    } catch (e) {
+      return false;
+    }
+  }
+
   async function waitForServerReady(button) {
-    var deadline = Date.now() + 16000;
+    // 第一次：8 秒以内能 ping 通就直接返回
+    var first = await tryStatus(button, 8000);
+    if (first) return first;
+
+    // 否则尝试 launcher 唤起（如果 launcher 没装也无所谓）
+    var launched = await tryLaunchViaLauncher(button);
+    if (launched) {
+      setButton(button, '导出服务启动中...', undefined, true);
+      // launcher 拉起 .command 后，Playwright/Chromium 首次冷启动会比较慢，给 30s
+      var second = await tryStatus(button, 30000);
+      if (second) return second;
+    }
+
+    throw new Error('导出服务未启动');
+  }
+
+  async function tryStatus(button, timeoutMs) {
+    var deadline = Date.now() + timeoutMs;
     var attempt = 0;
     while (Date.now() < deadline) {
       attempt += 1;
       try {
         return await fetchStatus();
       } catch (error) {
-        setButton(button, attempt === 1 ? '正在启动导出服务...' : '等待导出服务启动...', undefined, true);
+        setButton(button, attempt === 1 ? '正在连接导出服务...' : '等待导出服务启动...', undefined, true);
         await sleep(900);
       }
     }
-    throw new Error('导出服务未启动');
+    return null;
   }
 
   async function pollStatus(button) {
@@ -124,7 +159,7 @@
     } catch (error) {
       console.error('[prototype export]', error);
       setButton(button, '导出服务未启动', '#ef4444', false);
-      window.alert('导出服务还没启动成功。\\n\\n我已经给项目加了后台守护启动逻辑；如果仍失败，请双击项目根目录的「启动原型导出服务.command」，再点一次导出。');
+      window.alert('导出服务还没启动成功。\n\n通常 launcher 会自动唤起；若失败请双击项目根目录的「启动原型导出服务.command」，再点一次导出。');
       if (window.parent && window.parent !== window) {
         window.parent.postMessage('export-error', '*');
       }
