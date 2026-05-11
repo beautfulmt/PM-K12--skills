@@ -28,7 +28,9 @@ from urllib.parse import quote, unquote, urlparse
 PORT = int(os.environ.get("PROTOTYPE_SERVER_PORT", "8765"))
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 PROTOTYPE_DIR = PROJECT_DIR / "原型"
-OUTPUT_ROOT = PROJECT_DIR / "原型截图"
+FLOW_DIR = PROJECT_DIR / "流程图"
+PROTOTYPE_OUTPUT_ROOT = PROJECT_DIR / "原型截图"
+FLOW_OUTPUT_ROOT = PROJECT_DIR / "流程图截图"
 SERVER_URL = f"http://localhost:{PORT}"
 DEFAULT_HTML = PROTOTYPE_DIR / "AI试卷分析-prototype.html"
 DEFAULT_VIEWPORT = {"width": 1440, "height": 900}
@@ -76,6 +78,17 @@ def _first_prototype_html():
     return files[0] if files else None
 
 
+def _is_flow_html(html_path):
+    try:
+        return html_path.resolve().parent == FLOW_DIR.resolve()
+    except OSError:
+        return False
+
+
+def _output_root_for(html_path):
+    return FLOW_OUTPUT_ROOT if _is_flow_html(html_path) else PROTOTYPE_OUTPUT_ROOT
+
+
 def _resolve_html_path(raw_path):
     raw_path = raw_path or ""
 
@@ -91,6 +104,7 @@ def _resolve_html_path(raw_path):
             candidates.append(incoming)
         candidates.append(PROJECT_DIR / raw_path.lstrip("/"))
         candidates.append(PROJECT_DIR / raw_path)
+        candidates.append(FLOW_DIR / incoming.name)
 
     fallback = _first_prototype_html()
     if fallback:
@@ -389,7 +403,7 @@ async def _run_screenshots(html_path, options=None):
 
     options = options or {}
     viewport = _normalize_viewport(options.get("viewport"))
-    output_dir = OUTPUT_ROOT / _feature_name(html_path)
+    output_dir = _output_root_for(html_path) / _feature_name(html_path)
     source_labels = _extract_source_labels(html_path)
     files = []
     success = 0
@@ -411,44 +425,66 @@ async def _run_screenshots(html_path, options=None):
             )
             page = await context.new_page()
 
-            pages = await _discover_pages(page, html_path, source_labels)
-            await _force_tiled_mode(page)
-            await _wait_for_export_ready(page)
-            _update_state(total=len(pages))
-            used_names = set()
+            if _is_flow_html(html_path):
+                await page.goto(base_url, wait_until="networkidle", timeout=30000)
+                await _wait_for_export_ready(page)
+                containers = await page.locator(".chart-container").element_handles()
+                _update_state(total=len(containers))
+                used_names = set()
 
-            for index, item in enumerate(pages, 1):
-                label = _safe_filename(item["label"], fallback=item["page_id"])
-                filename = _dedupe_filename(f"{label}.png", used_names)
-                out_path = output_dir / filename
-                _update_state(progress=index - 1, current=label)
+                for index, handle in enumerate(containers, 1):
+                    label = f"{_feature_name(html_path)}-图{index}"
+                    filename = _dedupe_filename(f"{label}.png", used_names)
+                    out_path = output_dir / filename
+                    _update_state(progress=index - 1, current=label)
+                    try:
+                        await handle.scroll_into_view_if_needed(timeout=3000)
+                        await page.wait_for_timeout(150)
+                        await handle.screenshot(path=str(out_path), type="png", scale="device")
+                        files.append(str(out_path))
+                        success += 1
+                        _update_state(files=list(files))
+                    except Exception as error:
+                        print(f"  ⚠ [{label}] {error}")
+            else:
+                pages = await _discover_pages(page, html_path, source_labels)
+                await _force_tiled_mode(page)
+                await _wait_for_export_ready(page)
+                _update_state(total=len(pages))
+                used_names = set()
 
-                try:
-                    await _force_tiled_mode(page)
-                    await _set_tab(page, item.get("tab"))
-                    await _wait_for_export_ready(page)
-                    element = await _wait_for_visible_device(page, item["page_id"])
-                    await element.scroll_into_view_if_needed(timeout=3000)
-                    await page.wait_for_timeout(120)
-                    await element.screenshot(path=str(out_path), type="png", scale="device")
-                    files.append(str(out_path))
-                    success += 1
-                    _update_state(files=list(files))
-                except Exception as error:
-                    print(f"  ⚠ [{label}] {error}")
+                for index, item in enumerate(pages, 1):
+                    label = _safe_filename(item["label"], fallback=item["page_id"])
+                    filename = _dedupe_filename(f"{label}.png", used_names)
+                    out_path = output_dir / filename
+                    _update_state(progress=index - 1, current=label)
+
+                    try:
+                        await _force_tiled_mode(page)
+                        await _set_tab(page, item.get("tab"))
+                        await _wait_for_export_ready(page)
+                        element = await _wait_for_visible_device(page, item["page_id"])
+                        await element.scroll_into_view_if_needed(timeout=3000)
+                        await page.wait_for_timeout(120)
+                        await element.screenshot(path=str(out_path), type="png", scale="device")
+                        files.append(str(out_path))
+                        success += 1
+                        _update_state(files=list(files))
+                    except Exception as error:
+                        print(f"  ⚠ [{label}] {error}")
 
             await browser.close()
 
         _update_state(
             running=False,
-            progress=len(pages),
+            progress=success,
             current="完成",
             done=True,
             error=None,
             success_count=success,
             files=list(files),
         )
-        print(f"\n  🎉 截图完成：{success}/{len(pages)} 张 → {output_dir}\n")
+        print(f"\n  🎉 截图完成：{success} 张 → {output_dir}\n")
     except Exception as error:
         _update_state(running=False, done=True, error=str(error), current="导出失败")
         print(f"\n  ❌ 截图失败：{error}\n")
@@ -529,14 +565,14 @@ class Handler(BaseHTTPRequestHandler):
             done=False,
             error=None,
             success_count=0,
-            output_dir=str(OUTPUT_ROOT / _feature_name(html_path)),
+            output_dir=str(_output_root_for(html_path) / _feature_name(html_path)),
             html=str(html_path),
             files=[],
         )
 
         thread = threading.Thread(target=_screenshot_thread, args=(html_path, options), daemon=True)
         thread.start()
-        self._json({"started": True, "html": str(html_path), "output_dir": str(OUTPUT_ROOT / _feature_name(html_path))})
+        self._json({"started": True, "html": str(html_path), "output_dir": str(_output_root_for(html_path) / _feature_name(html_path))})
 
     def _serve_file(self, url_path):
         if url_path == "/":
@@ -605,9 +641,11 @@ def main():
     print(f"{'─' * 56}")
     print(f"  项目路径：{PROJECT_DIR}")
     print(f"  原型预览：{first_url}")
-    print("  截图输出：原型截图/[原型文件名]/")
+    print("  截图输出：")
+    print("    原型/*.html → 原型截图/[原型文件名]/")
+    print("    流程图/*.html → 流程图截图/[流程图文件名]/")
     print(f"{'─' * 56}")
-    print("  👉 在浏览器里打开任一 原型/*.html，点击「一键导出所有截图」即可")
+    print("  👉 在浏览器里打开任一 原型/*.html 或 流程图/*.html，点击导出即可")
     print("  ⌃C  停止服务器\n")
 
     if not os.environ.get("PROTOTYPE_SERVER_NO_OPEN") and first:
