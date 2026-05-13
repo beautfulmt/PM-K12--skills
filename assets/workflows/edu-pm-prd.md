@@ -109,10 +109,12 @@ description: 教育PM需求产出工作流 — 输入需求描述，产出PRD+�
 - 先图（原型）后文
 - 逐条编号描述交互规则
 - **极度重要：** 必须给 “描述” 列对应的 `<td>` 元素添加 `contenteditable="true"` 和 `style="outline: none;"` 属性（让文案在浏览器中可直接编辑）。
-- **极度重要：** 必须在 HTML 底部插入“悬浮双重动作面板”，代码大纲如下（AI需补全标准JS）：
-  1. 监听所有 `contenteditable="true"` 的 `blur` 事件，如果内容被修改，则为该 `td` 添加 `data-changed="true"` 属性和绿色的 `edited-cell` 高亮类。
-  2. 页面右下角的悬浮 `.save-btn-container` 区只保留一个按钮：“保存并通知AI”。截图导出功能已移至原型和流程图各自的 HTML 中，PRD 不再承载导出功能。
-  3. 点击保存按钮时，抓取 `document.documentElement.outerHTML` 并调用系统的文件保存句柄直接物理存档覆盖当前 PRD HTML 文件。
+- **极度重要：** 必须在 HTML 底部插入“悬浮保存面板”：
+  1. 页面右下角保留一个保存按钮：“💾 保存并通知AI”，按钮使用 `id="saveBtn"` 或 `.save-btn`。
+  2. 面板中加入可选状态节点 `<div class="save-status" id="saveStatus"></div>`，用于提示“已写回文件/服务未启动”等状态。
+  3. PRD HTML 底部必须引入 `<script src="../scripts/prd-save-client.js?v=YYYYMMDD"></script>`，不要再手写 `showSaveFilePicker` 作为主保存链路。
+  4. `prd-save-client.js` 会监听所有 `contenteditable="true"` 的 `blur` 事件，标记 `data-changed="true"` 和 `edited-cell`，点击保存时抓取当前 DOM，通过 `scripts/prototype_server.py` 的 `/api/save-html` 写回原 HTML 文件；服务未启动时会通过 8766 launcher 自动唤起，仍失败才下载 HTML 兜底。
+  5. AI 在继续工作前应优先读取磁盘上的 PRD HTML，以用户点击“保存并通知AI”后落盘的内容为准，再同步更新原型或流程图。
 - 黄色高亮标注关键变更点（用 `.alert` 样式块）
 - 必须覆盖异常和边界情况
 

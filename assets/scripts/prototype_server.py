@@ -5,7 +5,8 @@
 功能：
   1. 在 http://localhost:8765 提供项目文件预览
   2. 提供 /api/screenshot 接口，供 HTML 里的导出按钮触发
-  3. 使用 Playwright/Chromium 截取浏览器真实渲染后的 .device，避免 html-to-image 重绘差异
+  3. 提供 /api/save-html 接口，供 PRD HTML 将浏览器内编辑内容写回本地文件
+  4. 使用 Playwright/Chromium 截取浏览器真实渲染后的 .device，避免 html-to-image 重绘差异
 
 使用方法：双击项目根目录的「启动原型导出服务.command」，或执行：
   python3 scripts/prototype_server.py
@@ -125,6 +126,28 @@ def _resolve_html_path(raw_path):
             return resolved
 
     raise FileNotFoundError(f"找不到原型 HTML：{raw_path or '(empty)'}")
+
+
+def _resolve_writable_html_path(raw_path):
+    html_path = _resolve_html_path(raw_path)
+    allowed_dirs = {
+        PROTOTYPE_DIR.resolve(),
+        FLOW_DIR.resolve(),
+        (PROJECT_DIR / "需求文档").resolve(),
+        (PROJECT_DIR / "需求挖掘").resolve(),
+        (PROJECT_DIR / "验收清单").resolve(),
+        (PROJECT_DIR / "数据分析").resolve(),
+    }
+    if html_path.parent.resolve() not in allowed_dirs:
+        raise PermissionError(f"不允许保存到该目录：{html_path.parent}")
+    return html_path
+
+
+def _atomic_write_text(path, content):
+    tmp_path = path.with_name(f".{path.name}.tmp")
+    with tmp_path.open("w", encoding="utf-8", newline="") as file:
+        file.write(content)
+    os.replace(tmp_path, path)
 
 
 def _feature_name(html_path):
@@ -531,6 +554,8 @@ class Handler(BaseHTTPRequestHandler):
         path = unquote(self.path.split("?", 1)[0])
         if path == "/api/screenshot":
             self._handle_screenshot()
+        elif path == "/api/save-html":
+            self._handle_save_html()
         else:
             self._json({"error": "not found"}, 404)
 
@@ -573,6 +598,27 @@ class Handler(BaseHTTPRequestHandler):
         thread = threading.Thread(target=_screenshot_thread, args=(html_path, options), daemon=True)
         thread.start()
         self._json({"started": True, "html": str(html_path), "output_dir": str(_output_root_for(html_path) / _feature_name(html_path))})
+
+    def _handle_save_html(self):
+        try:
+            payload = self._read_json_body()
+            html_path = _resolve_writable_html_path(payload.get("path") or payload.get("html") or payload.get("url"))
+            content = payload.get("content")
+            if not isinstance(content, str) or not content.strip():
+                raise ValueError("保存内容为空")
+            if not content.lstrip().lower().startswith("<!doctype html"):
+                content = "<!DOCTYPE html>\n" + content
+            _atomic_write_text(html_path, content)
+        except Exception as error:
+            self._json({"ok": False, "error": str(error)}, 400)
+            return
+
+        self._json({
+            "ok": True,
+            "path": str(html_path),
+            "bytes": len(content.encode("utf-8")),
+            "saved_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+        })
 
     def _serve_file(self, url_path):
         if url_path == "/":

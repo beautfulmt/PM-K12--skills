@@ -8,6 +8,14 @@ user-invocable: true
 
 This skill turns education product requirements into working artifacts: PRD HTML, interactive prototype HTML, flowchart HTML, acceptance checklist, demand analysis, and data reports.
 
+## Core Capabilities
+
+- **PRD HTML**: create editable PRD files under `需求文档/`, with `contenteditable` detail cells and a “保存并通知AI” button that writes browser edits back to the local HTML file.
+- **Prototype HTML**: create single-file interactive prototypes under `原型/`, with hash-based page switching, tiled review mode, and real-render PNG export.
+- **Flowchart HTML**: create Mermaid flowcharts under `流程图/`, exported separately to `流程图截图/`.
+- **Review Loop**: after a user edits PRD text in the browser and clicks save, read the saved PRD HTML from disk, identify changed requirements, then update prototype and flowchart artifacts to stay aligned.
+- **Support Artifacts**: generate demand insight reports, acceptance checklists, and data-analysis reports for education-product work.
+
 ## First Decision
 
 1. If `.agents/workflows/` exists, do not re-initialize. Read the relevant workflow file and continue from the current project state.
@@ -41,6 +49,8 @@ For PRD work, treat `.agents/workflows/edu-pm-prd.md` as the authoritative proje
 - Keep PRD, prototype, and flowchart synchronized. When one changes, inspect the other two for necessary updates.
 - The HTML prototype is the primary interactive artifact. Pencil is optional visual enhancement only.
 - Use the local PNG export service through `scripts/prototype-export-client.js`; do not build new `html2canvas`/`html-to-image` exporters.
+- Use `scripts/prd-save-client.js` in PRD HTML for browser edit save-back. The local service endpoint is `scripts/prototype_server.py` `/api/save-html`; do not rely on browser downloads as the primary save mechanism.
+- When the user says they edited and saved the PRD in the browser, read the PRD HTML file from disk before making updates, then synchronize prototype and flowchart according to the saved text.
 - Before delivery, verify scripts render and the prototype pages match the PRD descriptions.
 
 ## Optional Pencil Path
