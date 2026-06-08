@@ -28,14 +28,49 @@ from urllib.parse import quote, unquote, urlparse
 
 PORT = int(os.environ.get("PROTOTYPE_SERVER_PORT", "8765"))
 PROJECT_DIR = Path(__file__).resolve().parent.parent
-PROTOTYPE_DIR = PROJECT_DIR / "原型"
-FLOW_DIR = PROJECT_DIR / "流程图"
-PROTOTYPE_OUTPUT_ROOT = PROJECT_DIR / "原型截图"
-FLOW_OUTPUT_ROOT = PROJECT_DIR / "流程图截图"
+# 产物按「需求名」分文件夹后，原型/流程图位于 [需求名]/原型/、[需求名]/流程图/；
+# 旧的扁平结构 原型/、流程图/ 仍兼容。截图输出到原型/流程图所在需求目录下的
+# 原型截图/、流程图截图/（旧扁平结构回退到项目根的对应目录）。
 SERVER_URL = f"http://localhost:{PORT}"
-DEFAULT_HTML = PROTOTYPE_DIR / "AI试卷分析-prototype.html"
 DEFAULT_VIEWPORT = {"width": 1440, "height": 900}
 EXPORT_DEVICE_SCALE = 2
+
+# 允许浏览器内编辑写回的产物子目录名（任意需求目录下的这些子目录，或项目根下的同名旧目录）
+WRITABLE_SUBDIR_NAMES = {"原型", "流程图", "需求文档", "需求挖掘", "验收清单", "数据分析"}
+
+
+def _all_html_under(subdir_name):
+    """收集项目内某类产物的所有 HTML：新嵌套 [需求名]/<subdir>/*.html + 旧扁平 <subdir>/*.html。"""
+    found = {}
+    for pattern in (f"*/{subdir_name}/*.html", f"{subdir_name}/*.html"):
+        for path in PROJECT_DIR.glob(pattern):
+            if path.is_file():
+                found[path.resolve()] = path
+    return sorted(found.values(), key=lambda p: p.as_posix())
+
+
+def _all_prototype_htmls():
+    return _all_html_under("原型")
+
+
+def _output_root_for(html_path):
+    """根据原型/流程图 HTML 的位置推导截图输出根目录。
+
+    新嵌套：[需求名]/原型/x.html  → [需求名]/原型截图/
+            [需求名]/流程图/x.html → [需求名]/流程图截图/
+    旧扁平：原型/x.html / 流程图/x.html → 项目根 原型截图/ / 流程图截图/
+    """
+    parent = html_path.resolve().parent          # .../原型 或 .../流程图
+    kind = parent.name                            # "原型" / "流程图"
+    out_name = "流程图截图" if kind == "流程图" else "原型截图"
+    requirement_dir = parent.parent               # 新结构=[需求名]/，旧结构=项目根
+    if (
+        kind in ("原型", "流程图")
+        and _is_under(requirement_dir, PROJECT_DIR)
+        and requirement_dir != PROJECT_DIR.resolve()
+    ):
+        return requirement_dir / out_name
+    return PROJECT_DIR / out_name
 
 
 _state = {
@@ -72,22 +107,15 @@ def _is_under(path, parent):
 
 
 def _first_prototype_html():
-    if DEFAULT_HTML.exists():
-        return DEFAULT_HTML
-
-    files = sorted(PROTOTYPE_DIR.glob("*.html"))
+    files = _all_prototype_htmls()
     return files[0] if files else None
 
 
 def _is_flow_html(html_path):
     try:
-        return html_path.resolve().parent == FLOW_DIR.resolve()
+        return html_path.resolve().parent.name == "流程图"
     except OSError:
         return False
-
-
-def _output_root_for(html_path):
-    return FLOW_OUTPUT_ROOT if _is_flow_html(html_path) else PROTOTYPE_OUTPUT_ROOT
 
 
 def _resolve_html_path(raw_path):
@@ -105,7 +133,6 @@ def _resolve_html_path(raw_path):
             candidates.append(incoming)
         candidates.append(PROJECT_DIR / raw_path.lstrip("/"))
         candidates.append(PROJECT_DIR / raw_path)
-        candidates.append(FLOW_DIR / incoming.name)
 
     fallback = _first_prototype_html()
     if fallback:
@@ -130,15 +157,10 @@ def _resolve_html_path(raw_path):
 
 def _resolve_writable_html_path(raw_path):
     html_path = _resolve_html_path(raw_path)
-    allowed_dirs = {
-        PROTOTYPE_DIR.resolve(),
-        FLOW_DIR.resolve(),
-        (PROJECT_DIR / "需求文档").resolve(),
-        (PROJECT_DIR / "需求挖掘").resolve(),
-        (PROJECT_DIR / "验收清单").resolve(),
-        (PROJECT_DIR / "数据分析").resolve(),
-    }
-    if html_path.parent.resolve() not in allowed_dirs:
+    parent = html_path.parent.resolve()
+    # 放行：项目内任意位置的「可写产物子目录」（如 [需求名]/需求文档/、原型/ 等），
+    # 同时兼容旧扁平结构（项目根下的同名目录）。父目录名需在白名单内且位于项目目录内。
+    if not (_is_under(parent, PROJECT_DIR) and parent.name in WRITABLE_SUBDIR_NAMES):
         raise PermissionError(f"不允许保存到该目录：{html_path.parent}")
     return html_path
 
@@ -688,10 +710,11 @@ def main():
     print(f"  项目路径：{PROJECT_DIR}")
     print(f"  原型预览：{first_url}")
     print("  截图输出：")
-    print("    原型/*.html → 原型截图/[原型文件名]/")
-    print("    流程图/*.html → 流程图截图/[流程图文件名]/")
+    print("    [需求名]/原型/*.html  → [需求名]/原型截图/[原型文件名]/")
+    print("    [需求名]/流程图/*.html → [需求名]/流程图截图/[流程图文件名]/")
+    print("    （旧扁平结构 原型/、流程图/ 回退到项目根的 原型截图/、流程图截图/）")
     print(f"{'─' * 56}")
-    print("  👉 在浏览器里打开任一 原型/*.html 或 流程图/*.html，点击导出即可")
+    print("  👉 在浏览器里打开任一 [需求名]/原型/*.html 或 [需求名]/流程图/*.html，点击导出即可")
     print("  ⌃C  停止服务器\n")
 
     if not os.environ.get("PROTOTYPE_SERVER_NO_OPEN") and first:

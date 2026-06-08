@@ -56,18 +56,14 @@ managed_copy() {
 }
 
 echo ""
-echo "📁 Creating output directories..."
+echo "📁 Creating shared directories..."
 
+# 产物按「需求名」分文件夹组织：每个需求一个顶层目录，内部再放
+# 需求文档/ 原型/ 流程图/ 原型截图/ 等子目录，写需求时按需创建。
+# init 阶段只创建所有需求共享的根目录。
 DIRS=(
-    "需求文档"
-    "原型"
-    "原型截图"
-    "流程图"
-    "数据分析"
-    "验收清单"
-    "需求挖掘"
-    ".handoff"
     "scripts"
+    ".handoff"
 )
 
 for dir in "${DIRS[@]}"; do
@@ -111,9 +107,9 @@ if [ "$(uname -s)" = "Darwin" ] && [ "${EDU_PM_SKIP_EXPORT_WATCHER:-0}" != "1" ]
 fi
 
 echo ""
-echo "📌 Adding .gitkeep to empty directories..."
+echo "📌 Adding .gitkeep to empty shared directories..."
 
-for dir in "需求文档" "原型" "原型截图" "流程图" "数据分析" "验收清单" "需求挖掘" ".handoff"; do
+for dir in ".handoff"; do
     gitkeep="$dir/.gitkeep"
     if [ ! -e "$gitkeep" ] && [ -z "$(ls -A "$dir" 2>/dev/null)" ]; then
         touch "$gitkeep"
@@ -127,7 +123,8 @@ echo "✅ Education PM Workflow initialized!"
 echo "=========================================="
 echo ""
 echo "📂 Workflow files:  .agents/workflows/"
-echo "📂 Output dirs:     需求文档/ 原型/ 流程图/ ..."
+echo "📂 Output layout:   [需求名]/{需求文档,原型,流程图,原型截图}/ （写需求时自动创建）"
+echo "📂 Shared:          scripts/  启动原型导出服务.command  .handoff/"
 echo "📄 Version history: 关键点.md"
 echo ""
 echo "💡 To start: describe a product requirement to AI"

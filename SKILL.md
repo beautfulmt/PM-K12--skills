@@ -8,14 +8,6 @@ user-invocable: true
 
 This skill turns education product requirements into working artifacts: PRD HTML, interactive prototype HTML, flowchart HTML, acceptance checklist, demand analysis, and data reports.
 
-## Core Capabilities
-
-- **PRD HTML**: create editable PRD files under `需求文档/`, with `contenteditable` detail cells and a “保存并通知AI” button that writes browser edits back to the local HTML file.
-- **Prototype HTML**: create single-file interactive prototypes under `原型/`, with hash-based page switching, tiled review mode, and real-render PNG export.
-- **Flowchart HTML**: create Mermaid flowcharts under `流程图/`, exported separately to `流程图截图/`.
-- **Review Loop**: after a user edits PRD text in the browser and clicks save, read the saved PRD HTML from disk, identify changed requirements, then update prototype and flowchart artifacts to stay aligned.
-- **Support Artifacts**: generate demand insight reports, acceptance checklists, and data-analysis reports for education-product work.
-
 ## First Decision
 
 1. If `.agents/workflows/` exists, do not re-initialize. Read the relevant workflow file and continue from the current project state.
@@ -33,24 +25,27 @@ find .agents/skills "$HOME/.codex/skills" "$HOME/.agents/skills" "$HOME/.claude/
 
 Load only the workflow needed for the user's current request:
 
+Artifacts are organized **per requirement**: each requirement gets ONE top-level folder named after it (`[需求名]/`), holding up to seven artifact subfolders — `需求文档/ 原型/ 流程图/ 原型截图/ 需求挖掘/ 验收清单/ 数据分析/` plus `沟通记录.md`. `scripts/`, `启动原型导出服务.command`, `.handoff/`, `关键点.md`, `.agents/` stay at the project root and are shared across requirements.
+
+**Folder ownership (applies to ALL four workflows):** Whichever workflow runs first creates `[需求名]/`. Before writing, every workflow first checks whether `[需求名]/` already exists — if so it reuses that folder and drops its output into the matching subfolder; if not it creates `[需求名]/`. PRD is **not** assumed to come first: a requirement may begin with demand discovery or data analysis, and all later steps reuse the same `[需求名]/`. Only create the subfolders actually used — never pre-create empty ones. Use an identical `[需求名]` across every workflow so all outputs land in one folder.
+
 | User intent | Read this file first | Primary output |
 |---|---|---|
-| New requirement, PRD, prototype, flowchart, continue PRD work | `.agents/workflows/edu-pm-prd.md` | `需求文档/[需求名]-PRD.html`, `原型/[需求名]-prototype.html`, `流程图/[需求名]-flow.html` |
-| Demand discovery, user needs, competitive/product insight | `.agents/workflows/edu-pm-demand.md` | `需求挖掘/[需求名]-需求洞察.html` |
-| Acceptance checklist, test checklist, launch verification | `.agents/workflows/edu-pm-acceptance.md` | `验收清单/[需求名]-验收清单.html` |
-| Metrics, BI-style analysis, report from data | `.agents/workflows/edu-pm-data-analysis.md` | `数据分析/[需求名]-数据分析.html` |
+| New requirement, PRD, prototype, flowchart, continue PRD work | `.agents/workflows/edu-pm-prd.md` | `[需求名]/需求文档/[需求名]-PRD.html`, `[需求名]/原型/[需求名]-prototype.html`, `[需求名]/流程图/[需求名]-flow.html` |
+| Demand discovery, user needs, competitive/product insight | `.agents/workflows/edu-pm-demand.md` | `[需求名]/需求挖掘/[需求名]-需求洞察.html` |
+| Acceptance checklist, test checklist, launch verification | `.agents/workflows/edu-pm-acceptance.md` | `[需求名]/验收清单/[需求名]-验收清单.html` |
+| Metrics, BI-style analysis, report from data | `.agents/workflows/edu-pm-data-analysis.md` | `[需求名]/数据分析/[需求名]-数据分析.html` |
 
 For PRD work, treat `.agents/workflows/edu-pm-prd.md` as the authoritative project workflow. Do not use root-level `edu-pm-prd.md` if both exist.
 
 ## PRD Workflow Rules
 
 - Confirm the requirement before writing when core information is missing; ask only focused questions.
+- **Tailor PRD sections to the requirement's size — do not force all sections.** Core skeleton always kept: 项目信息+版本记录, 需求背景, 需求目标, 详细方案. The other six (需求概述/流程图/异常边界/数据埋点/上线计划/附录) are dropped when the requirement doesn't need them (e.g. a tiny copy tweak needs no flowchart). Never drop sections silently — state which sections are kept/dropped and why during requirement confirmation, and get user sign-off first. If 流程图 is dropped, skip producing the flowchart file too. See edu-pm-prd.md §2.2 and §1.3.1.
 - Produce HTML artifacts, not Markdown artifacts, unless the user asks otherwise.
 - Keep PRD, prototype, and flowchart synchronized. When one changes, inspect the other two for necessary updates.
 - The HTML prototype is the primary interactive artifact. Pencil is optional visual enhancement only.
 - Use the local PNG export service through `scripts/prototype-export-client.js`; do not build new `html2canvas`/`html-to-image` exporters.
-- Use `scripts/prd-save-client.js` in PRD HTML for browser edit save-back. The local service endpoint is `scripts/prototype_server.py` `/api/save-html`; do not rely on browser downloads as the primary save mechanism.
-- When the user says they edited and saved the PRD in the browser, read the PRD HTML file from disk before making updates, then synchronize prototype and flowchart according to the saved text.
 - Before delivery, verify scripts render and the prototype pages match the PRD descriptions.
 
 ## Optional Pencil Path
@@ -63,17 +58,23 @@ Offer Pencil enhancement only after the HTML prototype is usable, or when the us
 
 ## Output Structure
 
+Per-requirement folders at the project root; shared tooling stays at root.
+
 ```text
-需求文档/                 PRD HTML
-原型/                     interactive prototype HTML and optional .pen
-原型截图/                  exported PNG screenshots
-流程图/                    flowchart HTML
-数据分析/                  data analysis reports
-验收清单/                  acceptance checklists
-需求挖掘/                  demand analysis reports
-scripts/                  prototype export service
-.handoff/                 cross-session handoff files
-.agents/workflows/        editable workflow definitions
+[需求名]/                  one top-level folder per requirement
+  需求文档/                  PRD HTML
+  原型/                     interactive prototype HTML and optional .pen
+  原型截图/                  exported PNG screenshots (this requirement)
+  流程图/                    flowchart HTML
+  数据分析/                  data analysis reports (created on demand)
+  验收清单/                  acceptance checklists (created on demand)
+  需求挖掘/                  demand analysis reports (created on demand)
+  沟通记录.md                per-requirement conversation log
+
+scripts/                  [shared] prototype export service
+启动原型导出服务.command     [shared] double-click to start PNG export service
+.handoff/                 [shared] cross-session handoff files
+.agents/workflows/        [shared] editable workflow definitions
 ```
 
 ## Customization
