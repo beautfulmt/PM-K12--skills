@@ -27,12 +27,36 @@ from urllib.parse import quote, unquote, urlparse
 
 PORT = int(os.environ.get("PROTOTYPE_SERVER_PORT", "8765"))
 PROJECT_DIR = Path(__file__).resolve().parent.parent
-PROTOTYPE_DIR = PROJECT_DIR / "原型"
-OUTPUT_ROOT = PROJECT_DIR / "原型截图"
+# 产物按「需求名」分文件夹后，原型位于 [需求名]/原型/*.html；
+# 旧的扁平结构 原型/*.html 仍兼容。两种都扫描。
 SERVER_URL = f"http://localhost:{PORT}"
-DEFAULT_HTML = PROTOTYPE_DIR / "AI试卷分析-prototype.html"
 DEFAULT_VIEWPORT = {"width": 1440, "height": 900}
 EXPORT_DEVICE_SCALE = 2
+
+
+def _all_prototype_htmls():
+    """收集项目内所有原型 HTML：新嵌套 [需求名]/原型/*.html + 旧扁平 原型/*.html。"""
+    found = {}
+    for pattern in ("*/原型/*.html", "原型/*.html"):
+        for path in PROJECT_DIR.glob(pattern):
+            if path.is_file():
+                found[path.resolve()] = path
+    return sorted(found.values(), key=lambda p: p.as_posix())
+
+
+def _output_dir_for(html_path):
+    """根据原型 HTML 的位置推导截图输出目录。
+
+    新嵌套：[需求名]/原型/x.html → [需求名]/原型截图/[feature]/
+    旧扁平：原型/x.html          → 原型截图/[feature]/
+    """
+    feature = _feature_name(html_path)
+    parent = html_path.resolve().parent          # .../原型
+    requirement_dir = parent.parent              # 新结构=[需求名]/，旧结构=项目根
+    if parent.name == "原型" and _is_under(requirement_dir, PROJECT_DIR) and requirement_dir != PROJECT_DIR.resolve():
+        return requirement_dir / "原型截图" / feature
+    # 旧扁平结构或异常位置：回退到项目根的 原型截图/
+    return PROJECT_DIR / "原型截图" / feature
 
 
 _state = {
@@ -69,10 +93,7 @@ def _is_under(path, parent):
 
 
 def _first_prototype_html():
-    if DEFAULT_HTML.exists():
-        return DEFAULT_HTML
-
-    files = sorted(PROTOTYPE_DIR.glob("*.html"))
+    files = _all_prototype_htmls()
     return files[0] if files else None
 
 
@@ -389,7 +410,7 @@ async def _run_screenshots(html_path, options=None):
 
     options = options or {}
     viewport = _normalize_viewport(options.get("viewport"))
-    output_dir = OUTPUT_ROOT / _feature_name(html_path)
+    output_dir = _output_dir_for(html_path)
     source_labels = _extract_source_labels(html_path)
     files = []
     success = 0
@@ -529,14 +550,14 @@ class Handler(BaseHTTPRequestHandler):
             done=False,
             error=None,
             success_count=0,
-            output_dir=str(OUTPUT_ROOT / _feature_name(html_path)),
+            output_dir=str(_output_dir_for(html_path)),
             html=str(html_path),
             files=[],
         )
 
         thread = threading.Thread(target=_screenshot_thread, args=(html_path, options), daemon=True)
         thread.start()
-        self._json({"started": True, "html": str(html_path), "output_dir": str(OUTPUT_ROOT / _feature_name(html_path))})
+        self._json({"started": True, "html": str(html_path), "output_dir": str(_output_dir_for(html_path))})
 
     def _serve_file(self, url_path):
         if url_path == "/":
@@ -605,7 +626,7 @@ def main():
     print(f"{'─' * 56}")
     print(f"  项目路径：{PROJECT_DIR}")
     print(f"  原型预览：{first_url}")
-    print("  截图输出：原型截图/[原型文件名]/")
+    print("  截图输出：[需求名]/原型截图/[原型文件名]/（旧扁平结构回退到 原型截图/）")
     print(f"{'─' * 56}")
     print("  👉 在浏览器里打开任一 原型/*.html，点击「一键导出所有截图」即可")
     print("  ⌃C  停止服务器\n")
