@@ -147,11 +147,11 @@ description: 教育PM需求产出工作流 — 输入需求描述，产出PRD+�
 
 - 先图（原型）后文
 - 逐条编号描述交互规则
-- **极度重要：** 必须给 “描述” 列对应的 `<td>` 元素添加 `contenteditable="true"` 和 `style="outline: none;"` 属性（让文案在浏览器中可直接编辑）。
-- **极度重要：** 必须在 HTML 底部插入“悬浮双重动作面板”，代码大纲如下（AI需补全标准JS）：
-  1. 监听所有 `contenteditable="true"` 的 `blur` 事件，如果内容被修改，则为该 `td` 添加 `data-changed="true"` 属性和绿色的 `edited-cell` 高亮类。
-  2. 页面右下角的悬浮 `.save-btn-container` 区只保留一个按钮：“保存并通知AI”。截图导出功能已移至原型和流程图各自的 HTML 中，PRD 不再承载导出功能。
-  3. 点击保存按钮时，抓取 `document.documentElement.outerHTML` 并调用系统的文件保存句柄直接物理存档覆盖当前 PRD HTML 文件。
+- **极度重要（全文档可编辑）：** PRD **整篇正文**都要能在浏览器里直接改——不再只让「描述」列可编辑。具体的可编辑范围、排除项、表格增删行与行列拖拽，全部由 **§2.7 通用编辑模块** 统一实现并固化为必做项；§2.4 这里只描述配套的保存动作。
+- **极度重要：** 必须在 HTML 底部插入“悬浮动作面板”，代码大纲如下（AI需补全标准JS）：
+  1. 编辑变更追踪：所有可编辑块的 `blur` 事件，如内容相对 `data-original` 被修改，则为该块加 `data-changed="true"` 属性和绿色 `edited-cell` 高亮类（追踪逻辑由 §2.7 模块统一提供，无需另写）。
+  2. 页面右下角的悬浮 `.save-btn-container` 区只保留一个按钮：“保存并通知AI”。截图导出功能已移至原型和流程图各自的 HTML 中，PRD 不再承载导出功能。另：**页面左下角**固定一个「📋 一键复制全文」按钮（实现见 §2.8），与右下角保存按钮分居两侧、互不遮挡。
+  3. 点击保存按钮时，抓取 `document.documentElement.outerHTML` 并调用系统的文件保存句柄直接物理存档覆盖当前 PRD HTML 文件。**因为保存抓的是 `outerHTML`，§2.7 把列宽/行高写成 inline px、把编辑写回 DOM，保存即自动持久化，无需额外存储逻辑。**
 - 黄色高亮标注关键变更点（用 `.alert` 样式块）
 - 必须覆盖异常和边界情况
 
@@ -159,10 +159,287 @@ description: 教育PM需求产出工作流 — 输入需求描述，产出PRD+�
 
 - 页面最大宽度设为 `1400px`（允许原型列有足够展示空间）
 - 表格使用 `table-layout: fixed`
-- 各列推荐宽度：一级模块 `100px`，二级功能 `100px`，原型 `350px`，描述自动扩展
-- `th` 和 `td` 不要默认启用 CSS `resize`；它容易留下拖拽残影并破坏表格截图。需要调整预览面积时，优先使用 PRD 右侧双栏预览或原型 iframe 自身的缩放手柄。
+- 各列推荐宽度：一级模块 `100px`，二级功能 `100px`，原型 `350px`，描述自动扩展（用 `<colgroup><col>` 承载列宽，便于拖拽时改 `col.style.width`）
+- **不要**用 CSS `resize`（`resize:both/horizontal`）来调列宽行高——它会留拖拽残影、破坏表格截图。列宽/行高改用 **§2.7 的专用拖拽手柄**：手柄 `hover` 才出现、拖拽写 **inline px** 尺寸随 `outerHTML` 持久化、鼠标移开即隐藏，静态截图保持干净。
 - `td` 设置 `word-break: break-word` 避免文字溢出
 - **极度重要（原型预览体验）：** PRD 中的原型 iframe 不要直接按原始尺寸硬塞进表格单元格，尤其是 16:9 横屏课堂原型。必须使用“等比例缩放容器”包裹 iframe，并在每个原型预览右下角提供直接拖拽的缩放手柄，拖拽时原型整体按比例同步变化，避免再额外做独立操作面板。
+
+### 2.6 右侧双栏交互原型预览（必做）
+
+> **背景（踩坑记录）：** 这套右侧「交互原型预览」面板长期只活在历史 PRD 成品里（如 `AI试卷分析-PRD.html`），从未沉淀成规范，导致从零写 PRD 时容易漏掉（2.4 又只让放保存按钮）。**故在此固化为必做项：每份 PRD 都要内建该面板。** 它与「五、详细方案」表格里的静态原型列（截图/小 iframe）不同——这是一个全局常驻、可切页、可缩放的活预览 dock。
+
+**目标：** PRD 左侧正文 + 右侧一个可关闭的深色面板，面板内嵌**活的原型 iframe**，用顶部下拉切换页面/场景，支持拖拽改宽，整体等比缩放。
+
+**① HTML 结构：**
+- `<body class="dual-pane">`：默认**打开**双栏。
+- `.prototype-sidebar`（`position:fixed; right:0; top:0; height:100vh; 深色 #1a1a2e; flex 纵向`）内含：
+  - `.sidebar-header`：`✕` 关闭按钮（`onclick="toggleDualPane()"`）+ 标题「交互原型预览」。
+  - `.preview-context`：一行说明（如收口范围、或"完整交互依赖后端、静态预览仅还原界面"等真实约束，**不夸大成全功能可跑**）。
+  - `.page-selector > select#pageSelect`（`onchange="switchPage(this.value)"`）。
+  - `.device-shell > .device-wrapper > iframe#prototypeFrame`。
+  - `.prototype-resizer`：面板左缘竖向拖拽手柄。
+- `.fab-group`（`position:fixed; right:28px; bottom:28px`）：含「双栏预览」开关按钮（`dual-pane` 时 `display:none`）+「💾 保存并通知AI」按钮。**双栏打开时整组右移**到面板左侧：`body.dual-pane .fab-group { right: calc(var(--panel-w) + 28px); }`。（即 2.4 的保存按钮并入此 fab-group，不再单独悬浮。）
+
+**② CSS 关键：**
+- `:root { --panel-w: 520px; }`
+- `body.dual-pane { margin:0!important; max-width:none!important; padding-right: calc(var(--panel-w) + 36px); }`（正文让出右侧面板宽度）
+- `body.dual-pane .prototype-sidebar { display:flex; }`（默认 `.prototype-sidebar{display:none}`）
+- `.device-wrapper iframe { transform-origin: top left; }`、`.device-shell { overflow:auto; }`（竖屏长页可滚）
+
+**③ JS 关键（内嵌 PRD 底部）：**
+```js
+// 每项：{value,label,url,w,h}。url 指向可寻址原型；w/h = 该页逻辑尺寸
+const CATALOG = [ { value:'p1', label:'P1 · xxx', url:'../原型/xxx-prototype.html#p1', w:375, h:812 }, /* ... */ ];
+let previewPage = CATALOG[0].value;
+function currentCfg(){ return CATALOG.find(o=>o.value===previewPage) || CATALOG[0]; }
+function scalePreview(){
+  const shell=document.querySelector('.device-shell'), wrap=document.getElementById('deviceWrapper'), frame=document.getElementById('prototypeFrame');
+  const cfg=currentCfg(), innerW=Math.max(120, shell.clientWidth-40), scale=innerW/cfg.w;
+  frame.style.width=cfg.w+'px'; frame.style.height=cfg.h+'px'; frame.style.transform='scale('+scale+')';
+  wrap.style.width=Math.round(cfg.w*scale)+'px'; wrap.style.height=Math.round(cfg.h*scale)+'px';
+}
+function switchPage(v){ previewPage=v; const f=document.getElementById('prototypeFrame'); if(f) f.src=currentCfg().url; requestAnimationFrame(scalePreview); setTimeout(scalePreview,350); }
+function toggleDualPane(){ document.body.classList.toggle('dual-pane'); if(document.body.classList.contains('dual-pane')) requestAnimationFrame(scalePreview); }
+// 拖拽 .prototype-resizer 改 --panel-w（clamp 如 380..min(900, innerWidth-360)）后 scalePreview()
+window.addEventListener('resize', scalePreview);
+window.addEventListener('load', ()=>{ /* renderSelect() */ switchPage(previewPage); });
+```
+
+**④ 横屏适配（极度重要）：** 16:9 横屏课堂原型逻辑尺寸用 `w:1280,h:720`；竖屏/手机页用自身尺寸（如 `375×812`）；报告等长页用其真实高度（如 `480×1360`）。各页按面板内宽 `scale`，`.device-shell` 溢出可滚，**不要把横屏页硬塞成手机竖屏**。
+
+**⑤ iframe 取材：** 优先指向**可按 hash/场景寻址**的原型（`prototype.html#page-id`）。若真实产品依赖后端无法静态跑（如课中语音链路），可指向「截图版/状态版」HTML（每场景一个 hash，活 DOM 还原 UI），并在 `.preview-context` 据实说明交互限制。
+
+**⑥ 与 3.4.2 联动：** 原型内切页时 `postMessage({type:'page-changed',page})`，PRD 既有监听同步 `#pageSelect`（向后兼容）。
+
+**⑦ 裁剪与迭代：** 仅 1 个原型页时可省下拉、只留单页预览，但**面板本身默认保留**；新增页必须同步往 `CATALOG` / `#pageSelect` 加项（见 5.3 第 14 项「PRD 双栏预览下拉项」）。
+
+### 2.7 全文档可编辑 · 表格行列拖拽 · 全表增删行（必做）
+
+> **背景（踩坑记录）：** 旧版只给「五、详细方案」描述列加 `contenteditable`、只有详细方案表能增删行；其余正文（背景/目标/版本记录/埋点…）在浏览器里都改不了，且 §2.5 旧规曾**禁用**列宽行高调整。**现固化为必做项：每份 PRD 都内建下面这套自包含的「通用编辑模块」**，一次性提供①全文档可编辑 ②全表增删行 ③列宽/行高拖拽。模块**幂等、纯内嵌、无外部依赖**，直接整段贴进 PRD 底部 `<script>`（在保存按钮逻辑之前），无需逐个单元格手写 `contenteditable`。
+
+**① 能力与边界**
+- **全文档可编辑：** 自动给正文内容块（`td/th/p/li/h1~h4/.alert/blockquote/dd/dt`）加 `contenteditable` 并接管变更追踪（`blur` 后内容变化 → `data-changed="true"` + `.edited-cell` 高亮）。
+- **reload 安全（极易踩坑）：** 「已接管」「原始内容」用内存态 `WeakMap`/`WeakSet` 守卫，**绝不把 `data-pm-tracked`/`data-original` 写进 DOM**——否则保存（`outerHTML`）后这些脏属性被存档，重新打开时守卫命中、`blur` 监听不再挂载，编辑高亮静默失效。仅 `contenteditable`、`data-changed`、`.edited-cell` 会随存档保留（前者保持可编辑、后两者作为评审标记，符合预期）。
+- **排除项（保持交互骨架不被误编辑）：** 右侧 `.prototype-sidebar` 预览面板、`.fab-group`/`.save-btn(-container)`/`.dual-pane-toggle` 悬浮按钮、各拖拽手柄、`.pm-anchor`、`iframe`/`script`/`style`/`button`；**含 `img`/`iframe`/`table`/`video`/`canvas` 的容器单元格（详细方案「原型」列无论用 iframe 还是截图 `<img>`）整体不接管**，避免原型/截图被改坏。
+- **全表增删行：** 作用于**所有数据表**（版本记录/功能清单/详细方案/埋点…）。**表头行自动识别**：整行均为 `<th>`（含写在 `<tbody>` 里的表头行）或位于 `<thead>` 的行都不加增删/行高控件、仅用于列宽手柄定位。每个数据行首格 `hover` 出现 `＋`（下方插一行）/`－`（删除本行，留 1 行兜底）；新行克隆结构、**去掉 `id`/`rowspan`/`colspan`** 防重复 id、清空文本、自动接管编辑。
+- **列宽/行高拖拽：** 表头每列右缘 `.col-resizer`（改 `<col>` 宽，下限 48px）、每数据行首格下缘 `.row-resizer`（改 `tr` 高，下限 24px）。手柄默认 `opacity:0`、`hover` 才显、写 inline px → 随 `outerHTML` 保存，且静态截图无残影。无 `<colgroup>` 的表会按表头单元格当前宽度自动补一个。
+
+**② CSS 关键（手柄一律 hover-only）：**
+```css
+.edited-cell { background:#e8f5e9 !important; }
+.editable-table-wrap { position:relative; margin:14px 0; }
+.editable-table-wrap > table { margin:0 !important; }
+.pm-anchor { position:relative; }
+.row-ctrl { position:absolute; left:-30px; display:flex; flex-direction:column; gap:3px; opacity:0; pointer-events:none; transition:opacity .15s; z-index:4; }
+tr:hover > * .pm-anchor > .row-ctrl, tr:hover .pm-anchor > .row-ctrl { opacity:1; pointer-events:auto; }
+.row-ctrl button { width:22px; height:18px; border:none; border-radius:5px; cursor:pointer; color:#fff; font-size:13px; font-weight:700; line-height:1; }
+.row-add { background:#00b894; } .row-del { background:#e74c3c; }
+.editable-table-remove { position:absolute; top:-12px; right:8px; z-index:5; border:none; border-radius:999px; background:rgba(231,76,60,.96); color:#fff; font-size:12px; padding:6px 10px; cursor:pointer; opacity:0; pointer-events:none; transition:opacity .15s; }
+.editable-table-wrap:hover .editable-table-remove { opacity:1; pointer-events:auto; }
+.col-resizer { position:absolute; top:0; right:0; width:9px; height:100%; cursor:col-resize; transform:translateX(50%); z-index:3; opacity:0; transition:opacity .15s; }
+.col-resizer::after { content:''; position:absolute; left:4px; top:0; width:2px; height:100%; background:#00b894; opacity:0; transition:opacity .15s; }
+th:hover .col-resizer, td:hover .col-resizer, body.col-resizing .col-resizer.active { opacity:1; }
+.col-resizer:hover::after, body.col-resizing .col-resizer.active::after { opacity:1; }
+.row-resizer { position:absolute; left:0; bottom:0; width:100%; height:9px; cursor:row-resize; transform:translateY(50%); z-index:3; }
+.row-resizer::after { content:''; position:absolute; top:4px; left:0; width:100%; height:2px; background:#00b894; opacity:0; transition:opacity .15s; }
+.row-resizer:hover::after, body.row-resizing .row-resizer.active::after { opacity:1; }
+body.col-resizing, body.row-resizing { user-select:none !important; }
+body.col-resizing { cursor:col-resize !important; } body.row-resizing { cursor:row-resize !important; }
+```
+
+**③ JS 模块（已在无头 Chrome 对真实 PRD 结构实测全绿：全文档可编辑/排除 img 原型列/`<th>`-in-`<tbody>` 表头识别/增删行/列宽±与48px下限/行高/edited 高亮/无脏属性泄漏/幂等再init，整段照贴）：**
+```js
+(function () {
+  var EDITABLE_BLOCK_SELECTOR = 'td, th, p, li, h1, h2, h3, h4, .alert, blockquote, dd, dt';
+  var EXCLUDE_SELECTOR = '.prototype-sidebar, .fab-group, .save-btn, .save-btn-container, .dual-pane-toggle, ' +
+    '.col-resizer, .row-resizer, .row-ctrl, .pm-anchor, .editable-table-remove, script, style, iframe, button';
+  var SKIP_CELL_CONTENT = 'table, iframe, video, canvas, img';   // 含这些的容器格不整体接管（如原型/截图列）
+  var origMap = new WeakMap(), rowDone = new WeakSet();
+  function isExcluded(el){ return !!(el.closest && el.closest(EXCLUDE_SELECTOR)); }
+  function isHeaderRow(tr){ return tr.cells.length > 0 && Array.prototype.every.call(tr.cells, function(c){ return c.tagName === 'TH'; }); }
+  function headerRowOf(table){
+    if (table.tHead && table.tHead.rows[0]) return table.tHead.rows[0];
+    for (var i=0;i<table.rows.length;i++) if (isHeaderRow(table.rows[i])) return table.rows[i];
+    return table.rows[0] || null;
+  }
+  function markEditableCellChanged(el){ if(!el) return; el.setAttribute('data-changed','true'); el.classList.add('edited-cell'); }
+  function trackEditable(el){
+    if (origMap.has(el)) return; origMap.set(el, el.innerHTML);   // 内存态守卫，不写入 HTML
+    el.setAttribute('contenteditable','true'); el.style.outline='none';
+    el.addEventListener('blur', function(){ if(this.innerHTML !== origMap.get(this)) markEditableCellChanged(this); });
+  }
+  function makeDocumentEditable(root){
+    (root||document).querySelectorAll(EDITABLE_BLOCK_SELECTOR).forEach(function(el){
+      if (isExcluded(el)) return;
+      if (el.querySelector(SKIP_CELL_CONTENT)) return;
+      trackEditable(el);
+    });
+  }
+  function wrapTable(table){
+    if (table.closest('.editable-table-wrap')) return table.closest('.editable-table-wrap');
+    var wrap=document.createElement('div'); wrap.className='editable-table-wrap'; wrap.setAttribute('contenteditable','false');
+    table.parentNode.insertBefore(wrap, table); wrap.appendChild(table);
+    var rm=document.createElement('button'); rm.type='button'; rm.className='editable-table-remove'; rm.textContent='删除表格';
+    rm.addEventListener('click', function(e){ e.preventDefault(); wrap.remove(); }); wrap.appendChild(rm); return wrap;
+  }
+  function blankRowFrom(tr){
+    var clone=tr.cloneNode(true); clone.style.height=''; clone.removeAttribute('id');
+    Array.prototype.forEach.call(clone.cells, function(c){
+      c.removeAttribute('rowspan'); c.removeAttribute('colspan'); c.removeAttribute('id');
+      c.removeAttribute('data-changed'); c.classList.remove('edited-cell');
+      c.querySelectorAll('.row-ctrl, .col-resizer, .row-resizer, .pm-anchor').forEach(function(n){
+        if(n.classList.contains('pm-anchor')){ while(n.firstChild) n.parentNode.insertBefore(n.firstChild,n); n.remove(); } else n.remove();
+      });
+      if(!c.querySelector('iframe, img, video, canvas')) c.innerHTML='<br>';
+      c.removeAttribute('contenteditable');
+    });
+    return clone;
+  }
+  function installRowControls(tr){
+    var first=tr.cells[0]; if(!first || first.querySelector(':scope > .pm-anchor > .row-ctrl')) return;
+    first.style.position='relative';
+    var anchor=document.createElement('span'); anchor.className='pm-anchor'; anchor.setAttribute('contenteditable','false');
+    var ctrl=document.createElement('span'); ctrl.className='row-ctrl';
+    var add=document.createElement('button'); add.type='button'; add.className='row-add'; add.textContent='+'; add.title='在下方插入一行';
+    var del=document.createElement('button'); del.type='button'; del.className='row-del'; del.textContent='−'; del.title='删除本行';
+    add.addEventListener('click', function(e){ e.preventDefault(); var nr=blankRowFrom(tr); tr.parentNode.insertBefore(nr, tr.nextSibling); decorateRow(nr); makeDocumentEditable(nr); });
+    del.addEventListener('click', function(e){ e.preventDefault(); var body=tr.parentNode; var dataRows=Array.prototype.filter.call(body.rows, function(r){return !isHeaderRow(r);}); if(dataRows.length<=1) return; tr.remove(); });
+    ctrl.appendChild(add); ctrl.appendChild(del); anchor.appendChild(ctrl); first.insertBefore(anchor, first.firstChild);
+  }
+  function ensureCols(table){
+    if (table.querySelector('colgroup')) return table.querySelector('colgroup');
+    var headRow=headerRowOf(table); if(!headRow) return null;
+    var cg=document.createElement('colgroup');
+    for(var i=0;i<headRow.cells.length;i++){ var col=document.createElement('col'); col.style.width=headRow.cells[i].offsetWidth+'px'; cg.appendChild(col); }
+    table.insertBefore(cg, table.firstChild); return cg;
+  }
+  function installColResizers(table){
+    var cg=ensureCols(table); if(!cg) return; var cols=cg.querySelectorAll('col');
+    var headRow=headerRowOf(table); if(!headRow) return;
+    Array.prototype.forEach.call(headRow.cells, function(th, idx){
+      if(idx>=cols.length) return; if(th.querySelector(':scope > .col-resizer')) return;
+      th.style.position='relative';
+      var h=document.createElement('span'); h.className='col-resizer'; h.setAttribute('contenteditable','false');
+      h.addEventListener('mousedown', function(e){
+        e.preventDefault(); e.stopPropagation();
+        var startX=e.clientX, startW=cols[idx].offsetWidth||th.offsetWidth;
+        h.classList.add('active'); document.body.classList.add('col-resizing');
+        function mv(ev){ cols[idx].style.width=Math.max(48, startW+(ev.clientX-startX))+'px'; }
+        function up(){ document.removeEventListener('mousemove',mv); document.removeEventListener('mouseup',up); h.classList.remove('active'); document.body.classList.remove('col-resizing'); }
+        document.addEventListener('mousemove',mv); document.addEventListener('mouseup',up);
+      });
+      th.appendChild(h);
+    });
+  }
+  function installRowResizer(tr){
+    var first=tr.cells[0]; if(!first || first.querySelector(':scope > .row-resizer')) return;
+    first.style.position='relative';
+    var h=document.createElement('span'); h.className='row-resizer'; h.setAttribute('contenteditable','false');
+    h.addEventListener('mousedown', function(e){
+      e.preventDefault(); e.stopPropagation();
+      var startY=e.clientY, startH=tr.offsetHeight;
+      h.classList.add('active'); document.body.classList.add('row-resizing');
+      function mv(ev){ tr.style.height=Math.max(24, startH+(ev.clientY-startY))+'px'; }
+      function up(){ document.removeEventListener('mousemove',mv); document.removeEventListener('mouseup',up); h.classList.remove('active'); document.body.classList.remove('row-resizing'); }
+      document.addEventListener('mousemove',mv); document.addEventListener('mouseup',up);
+    });
+    first.appendChild(h);
+  }
+  function decorateRow(tr){ if(rowDone.has(tr) || isHeaderRow(tr) || tr.closest('thead')) return; rowDone.add(tr); installRowControls(tr); installRowResizer(tr); }
+  function installTableControls(root){
+    (root||document).querySelectorAll('table').forEach(function(table){
+      if(isExcluded(table) || table.closest('.no-edit')) return;
+      wrapTable(table); installColResizers(table);
+      Array.prototype.forEach.call(table.rows, decorateRow);
+    });
+  }
+  function init(root){ installTableControls(root); makeDocumentEditable(root); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', function(){ init(document); }); else init(document);
+  window.PMEdit={ init:init, makeDocumentEditable:makeDocumentEditable, installTableControls:installTableControls };
+})();
+```
+
+**④ 接入约定：**
+- 详细方案及其它定宽表必须带 `<colgroup><col>`（见 §2.5），列宽拖拽改的就是这些 `<col>`。
+- 某张表确实不想被编辑/加控件时，给该 `<table>` 加 `class="no-edit"` 豁免（如纯展示装饰表）。
+- **迭代联动（接 §5.3）：** 新增表格/新增整块正文后，调用 `PMEdit.init(新节点)` 让控件对新节点幂等生效；`PMEdit.init`、`installTableControls`、`makeDocumentEditable` 均可重复安全调用，不会重复加手柄。
+- 保存仍走 §2.4 的「💾 保存并通知AI」按钮抓 `outerHTML`；编辑内容、`edited-cell`、inline 列宽/行高都会一并落盘。
+
+### 2.8 左下角「一键复制全文」（必做）
+
+> **目的：** 方便把整份 PRD 一键拷到钉钉/飞书/Word 等外部文档。复制必须是**富文本**（`text/html`，保留表格/标题/加粗/列表），并在导出前**剥离所有交互骨架与编辑痕迹**，否则粘出去会带一堆手柄、绿色高亮和 `contenteditable` 脏属性。
+
+**① 按钮：** 页面**左下角**固定一个 `.copy-all-fab`（`position:fixed; left:28px; bottom:28px`），`onclick="copyAllContent()"`，文案「📋 一键复制全文」。与右下角 `.fab-group`（双栏/保存）分居两侧；双栏打开时右侧面板不影响左下角，无需偏移。另配一个 `.copy-toast`（左下、`bottom:80px`）做轻量结果反馈，默认 `opacity:0`、`.show` 时淡入，2 秒后自动隐藏。
+
+**② 导出清洗（关键）：** `document.body.cloneNode(true)` 后，在副本上：
+- **删除交互骨架**：`.prototype-sidebar`、`.fab-group`、`.copy-all-fab`、`.copy-toast`、`.col-resizer`、`.row-resizer`、`.row-ctrl`、`.pm-anchor`、`.editable-table-remove`、`script`/`noscript`、以及 `iframe`（流程图/原型 iframe 粘不过去）。
+- **解包**：`.editable-table-wrap` 用其内部 `<table>` 替换自身。
+- **去编辑痕迹**：移除所有 `contenteditable`、`data-changed`/`data-original`/`data-orig`/`data-pm-tracked` 属性与 `.edited-cell` 类。
+- **补排版**：给 `table` 补 `border-collapse/width`、给 `th,td` 补 `1px` 边框+内边距、`th` 补浅底色（内联 style，确保粘到无样式环境也有框）；把 `img` 的 `src` 绝对化（`img.setAttribute('src', img.src)`）。
+
+**③ 写剪贴板：** 优先 `navigator.clipboard.write([new ClipboardItem({'text/html':blobHtml,'text/plain':blobText})])`（`text/plain` = 清洗后 `clone.innerText` 兜底）；不支持或被拒时**回退**到离屏 `contenteditable` 容器 + 选区 + `document.execCommand('copy')`。成功/失败都用 `.copy-toast` 提示。
+
+**④ JS（已在无头 Chrome 实测：富文本含表格/加粗、骨架与编辑痕迹全无、内联边框、图片绝对化、纯文本兜底全绿，整段照贴）：**
+```js
+(function(){
+  function buildExportClone(){
+    var clone = document.body.cloneNode(true);
+    clone.querySelectorAll('.prototype-sidebar, .fab-group, .copy-all-fab, .copy-toast, .col-resizer, .row-resizer, .row-ctrl, .pm-anchor, .editable-table-remove, script, noscript').forEach(function(n){ n.remove(); });
+    clone.querySelectorAll('.editable-table-wrap').forEach(function(w){ var t=w.querySelector('table'); if(t) w.replaceWith(t); else w.remove(); });
+    clone.querySelectorAll('iframe').forEach(function(f){ f.remove(); });
+    clone.querySelectorAll('[contenteditable]').forEach(function(el){ el.removeAttribute('contenteditable'); });
+    ['data-changed','data-original','data-orig','data-pm-tracked'].forEach(function(a){ clone.querySelectorAll('['+a+']').forEach(function(el){ el.removeAttribute(a); }); });
+    clone.querySelectorAll('.edited-cell').forEach(function(el){ el.classList.remove('edited-cell'); });
+    clone.querySelectorAll('table').forEach(function(t){ t.style.borderCollapse='collapse'; t.style.width='100%'; });
+    clone.querySelectorAll('th,td').forEach(function(c){ c.style.border='1px solid #ccc'; c.style.padding='6px 10px'; c.style.verticalAlign='top'; });
+    clone.querySelectorAll('th').forEach(function(c){ if(!c.style.background) c.style.background='#f2f1f8'; });
+    clone.querySelectorAll('img').forEach(function(img){ try{ img.setAttribute('src', img.src); }catch(e){} });
+    return clone;
+  }
+  function showToast(msg, err){
+    var t=document.querySelector('.copy-toast');
+    if(!t){ t=document.createElement('div'); t.className='copy-toast'; document.body.appendChild(t); }
+    t.textContent=msg; t.style.background= err? '#c0392b' : '#2a2459'; t.classList.add('show');
+    clearTimeout(showToast._t); showToast._t=setTimeout(function(){ t.classList.remove('show'); }, 2200);
+  }
+  async function copyAllContent(){
+    var clone=buildExportClone();
+    var html='<meta charset="utf-8">'+clone.innerHTML;
+    var text=clone.innerText;
+    try{
+      if(navigator.clipboard && window.ClipboardItem){
+        await navigator.clipboard.write([new ClipboardItem({
+          'text/html': new Blob([html],{type:'text/html'}),
+          'text/plain': new Blob([text],{type:'text/plain'})
+        })]);
+        showToast('已复制全文，可直接粘贴到钉钉/飞书/Word'); return;
+      }
+      throw new Error('no async clipboard');
+    }catch(e){
+      try{
+        var holder=document.createElement('div'); holder.setAttribute('contenteditable','true');
+        holder.style.cssText='position:fixed;left:-99999px;top:0;opacity:0;'; holder.innerHTML=html;
+        document.body.appendChild(holder);
+        var range=document.createRange(); range.selectNodeContents(holder);
+        var sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+        var okc=document.execCommand('copy'); sel.removeAllRanges(); holder.remove();
+        if(okc){ showToast('已复制全文，可直接粘贴到钉钉/飞书/Word'); } else { throw new Error('execCommand 拒绝'); }
+      }catch(e2){ showToast('复制失败，请手动全选复制：'+(e2.message||e2), true); }
+    }
+  }
+  window.copyAllContent=copyAllContent;
+})();
+```
+
+**⑤ CSS 草图：**
+```css
+.copy-all-fab { position:fixed; left:28px; bottom:28px; z-index:1001; background:#fff; color:#3b357a; border:1px solid #d8d4f0; border-radius:12px; padding:13px 20px; font-size:14px; font-weight:700; cursor:pointer; box-shadow:0 4px 16px rgba(91,91,214,.18); display:flex; align-items:center; gap:8px; }
+.copy-all-fab:hover { transform:translateY(-2px); border-color:#5b5bd6; }
+.copy-toast { position:fixed; left:28px; bottom:80px; z-index:1002; max-width:360px; background:#2a2459; color:#fff; padding:11px 16px; border-radius:10px; font-size:13px; box-shadow:0 8px 24px rgba(20,16,70,.28); opacity:0; transform:translateY(8px); pointer-events:none; transition:opacity .2s, transform .2s; }
+.copy-toast.show { opacity:1; transform:translateY(0); }
+```
+
+> **取材限制（据实说明，勿夸大）：** 本地相对路径的截图/iframe 粘到钉钉云文档时通常不会自动上传，复制以**文本+表格结构**为主；图片可能需要在目标文档里重新插入。
 
 ---
 
@@ -584,6 +861,37 @@ Pencil 设计稿完成后，**必须反向校准 HTML 原型**使两端视觉一
   style="width: 100%; height: 800px; border: none; background: transparent;">
 </iframe>
 ```
+
+### 4.5 导出截图必走本地导出服务（必做 · 踩坑记录）
+
+> **背景（踩坑记录）：** 流程图常常比视口高很多。若导出按钮**直接在浏览器里用 `html-to-image`/`html2canvas` 截 `.chart-container`**，长图会被**截掉一半**（受浏览器画布尺寸/视口限制）。项目早已为此做了**本地导出服务**（`scripts/prototype_server.py`，Playwright 对每个 `.chart-container` 做**整元素截图**，不受视口高度限制），却容易在新生成流程图时漏接，退化成半张图。**故固化为必做项。**
+
+**① 每个流程图 HTML 必须接入导出服务客户端**（与原型导出同一套）：
+```html
+<button class="export-btn" onclick="exportChart()">📸 导出截图</button>
+<!-- 路径取决于嵌套层级：[需求名]/流程图/ 下为 ../../scripts/；旧扁平 流程图/ 下为 ../scripts/ -->
+<script src="../../scripts/prototype-export-client.js?v=YYYYMMDD-flow"></script>
+```
+- 客户端会在**捕获阶段**拦截 `.export-btn`/`.export-fab`/`#exportFab` 的点击，转而 POST `http://localhost:8765/api/screenshot`，由服务用 Playwright 截图，输出到 `[需求名]/流程图截图/`（旧扁平结构回退项目根 `流程图截图/`）。服务未启动时会自动尝试 launcher 唤起，仍失败则提示用户双击根目录「启动原型导出服务.command」。
+
+**② `onclick` 仅作降级兜底**：服务客户端加载时它不会触发（点击已被捕获）。兜底实现必须**服务优先 + 整图**：先 `window.exportPrototypeViaServer(btn)`，失败再 `html-to-image`，且**必须按完整 scroll 尺寸截**，否则仍是半张：
+```js
+async function exportChart(){
+  const btn=document.querySelector('.export-btn'), t=btn.textContent, bg=btn.style.background;
+  btn.textContent='⏳ 导出中...'; btn.disabled=true;
+  if(window.exportPrototypeViaServer){ try{ await window.exportPrototypeViaServer(btn); return; }catch(e){ console.warn('服务导出失败，降级',e); } }
+  try{
+    const {toBlob}=await import('https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/+esm');
+    const node=document.querySelector('.chart-container'), s=2;
+    const blob=await toBlob(node,{cacheBust:true,backgroundColor:'#ffffff',pixelRatio:s,
+      width:node.scrollWidth,height:node.scrollHeight,canvasWidth:node.scrollWidth*s,canvasHeight:node.scrollHeight*s,style:{transform:'none'}});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='[需求名]-流程图.png'; a.click(); URL.revokeObjectURL(a.href);
+    btn.textContent='✅ 已导出';
+  }catch(e){ console.error(e); btn.textContent='❌ 失败'; btn.style.background='#ef4444'; }
+  setTimeout(()=>{ btn.textContent=t; btn.style.background=bg; btn.disabled=false; },2200);
+}
+```
+**③ 自检：** 流程图产出后，按「四、原型一致性自查」同理确认导出按钮已 `include` 客户端脚本、路径层级正确（嵌套 `../../`）、点击能走服务出全图——**不允许只留裸 `html-to-image` 按钮**。
 
 ---
 

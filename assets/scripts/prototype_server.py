@@ -448,7 +448,9 @@ async def _run_screenshots(html_path, options=None):
 
     options = options or {}
     viewport = _normalize_viewport(options.get("viewport"))
-    output_dir = _output_root_for(html_path) / _feature_name(html_path)
+    # 截图直接放在一级目录（[需求名]/流程图截图/ 或 原型截图/），不再按 HTML 名多封一层子文件夹。
+    # 文件名已带 feature/场景前缀，避免同目录碰撞；清理时按本 HTML 的前缀只删自己上一轮产物。
+    output_dir = _output_root_for(html_path)
     source_labels = _extract_source_labels(html_path)
     files = []
     success = 0
@@ -457,7 +459,9 @@ async def _run_screenshots(html_path, options=None):
 
     try:
         output_dir.mkdir(parents=True, exist_ok=True)
-        for old_png in output_dir.glob("*.png"):
+        # 只清理本 HTML 上一轮的 PNG：流程图按 "{feature}-图*"，原型整目录归该需求所有。
+        cleanup_glob = f"{_feature_name(html_path)}-图*.png" if _is_flow_html(html_path) else "*.png"
+        for old_png in output_dir.glob(cleanup_glob):
             old_png.unlink()
 
         base_url = f"{SERVER_URL}{_relative_url_path(html_path)}"

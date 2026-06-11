@@ -96,7 +96,6 @@ echo "📸 Installing prototype export service..."
 managed_copy "${ASSETS_DIR}/scripts/prototype_server.py"              "scripts/prototype_server.py"
 managed_copy "${ASSETS_DIR}/scripts/prototype_launcher.py"            "scripts/prototype_launcher.py"
 managed_copy "${ASSETS_DIR}/scripts/prototype-export-client.js"       "scripts/prototype-export-client.js"
-managed_copy "${ASSETS_DIR}/scripts/prd-save-client.js"               "scripts/prd-save-client.js"
 managed_copy "${ASSETS_DIR}/scripts/setup_prototype_export_watcher.sh" "scripts/setup_prototype_export_watcher.sh"
 managed_copy "${ASSETS_DIR}/scripts/启动原型导出服务.command"          "启动原型导出服务.command"
 
