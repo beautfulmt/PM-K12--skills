@@ -213,6 +213,34 @@ window.addEventListener('load', ()=>{ /* renderSelect() */ switchPage(previewPag
 
 **⑦ 裁剪与迭代：** 仅 1 个原型页时可省下拉、只留单页预览，但**面板本身默认保留**；新增页必须同步往 `CATALOG` / `#pageSelect` 加项（见 5.3 第 14 项「PRD 双栏预览下拉项」）。
 
+**⑧ 滚动联动 / scroll-spy（必做）：** 左侧正文滚到某模块，右侧交互预览**自动切到该模块对应的原型页**（滚到「界面1」→预览定位界面1，滚到「界面3」→跟随切界面3），不用手点下拉。
+- **取材：** 给「五、详细方案」每个**一级模块单元格**（`td.mod`，或模块首行 `<tr>`）加 `data-preview="<CATALOG 里对应页的 value>"`。新增模块/页时必须同步补这个属性（并入 5.3 迭代清单）。
+- **激活判定：** 监听 `window` 滚动（`requestAnimationFrame` 节流），取视口上方约 35% 处「激活线」**之上最后一个** `data-preview` 元素为当前模块；`v !== previewPage` 时才 `switchPage(v)`（避免反复重载 iframe）；仅 `body.dual-pane` 打开时生效。
+- **不与用户打架：** 监听 `#pageSelect` 的 `change`，用户**手动选页**后短暂（~4s）暂停联动（`switchPage` 程序化改 `select.value` 不会触发 `change`，故自动切不会误锁）。
+
+```js
+function initPreviewScrollSync(){
+  var nodes = Array.prototype.slice.call(document.querySelectorAll('.scheme-table [data-preview]'));
+  if(!nodes.length) return;
+  var lockUntil = 0, sel = document.getElementById('pageSelect');
+  if(sel) sel.addEventListener('change', function(){ lockUntil = Date.now() + 4000; });
+  function pickActive(){
+    if(!document.body.classList.contains('dual-pane') || Date.now() < lockUntil) return;
+    var line = window.innerHeight * 0.35, current = null;
+    for(var i=0;i<nodes.length;i++){ if(nodes[i].getBoundingClientRect().top <= line) current = nodes[i]; }
+    if(!current) current = nodes[0];
+    var v = current.getAttribute('data-preview');
+    if(v && v !== previewPage) switchPage(v);
+  }
+  var ticking = false;
+  function onScroll(){ if(ticking) return; ticking = true; requestAnimationFrame(function(){ pickActive(); ticking = false; }); }
+  window.addEventListener('scroll', onScroll, { passive:true });
+  window.addEventListener('resize', onScroll);
+  pickActive();
+}
+// 在 window load 里：renderSelect(); switchPage(previewPage); initPreviewScrollSync();
+```
+
 ### 2.7 全文档可编辑 · 表格行列拖拽 · 全表增删行（必做）
 
 > **背景（踩坑记录）：** 旧版只给「五、详细方案」描述列加 `contenteditable`、只有详细方案表能增删行；其余正文（背景/目标/版本记录/埋点…）在浏览器里都改不了，且 §2.5 旧规曾**禁用**列宽行高调整。**现固化为必做项：每份 PRD 都内建下面这套自包含的「通用编辑模块」**，一次性提供①全文档可编辑 ②全表增删行 ③列宽/行高拖拽。模块**幂等、纯内嵌、无外部依赖**，直接整段贴进 PRD 底部 `<script>`（在保存按钮逻辑之前），无需逐个单元格手写 `contenteditable`。
@@ -944,7 +972,7 @@ async function exportChart(){
 | 11 | 附录 · 决策对齐表 | 是否新增决策项 |
 | 12 | 附录 · 产品风格定位 | 是否影响文案风格 |
 | 13 | 原型文件（.html） | 新增页面 + 更新 `pages` 数组 + **逐页检查文案/数据/状态是否与 PRD 描述一致（参照 3.6 节）** |
-| 14 | PRD 双栏预览下拉项 | 新增页的 option |
+| 14 | PRD 双栏预览下拉项 + 滚动联动 | 新增页的 `CATALOG` 项 / `#pageSelect` option，并给对应「一级模块」单元格补 `data-preview=<value>`（见 2.6 ⑧ scroll-spy） |
 | 15 | PRD 的页面映射（如 `pageAliases`、端侧页面集合、预览状态） | 新增页或删除端侧时需同步 |
 
 > **裁剪章节的处理：** 上表第 4/5/8/9/10/11/12 项对应的章节可能在初稿时已按 2.2 裁掉。遍历到这些位置时：
