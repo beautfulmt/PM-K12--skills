@@ -5,7 +5,8 @@
 功能：
   1. 在 http://localhost:8765 提供项目文件预览
   2. 提供 /api/screenshot 接口，供 HTML 里的导出按钮触发
-  3. 使用 Playwright/Chromium 截取浏览器真实渲染后的 .device，避免 html-to-image 重绘差异
+  3. 提供 /api/save-html 接口，供 PRD HTML 将浏览器内编辑内容写回本地文件
+  4. 使用 Playwright/Chromium 截取浏览器真实渲染后的 .device，避免 html-to-image 重绘差异
 
 使用方法：双击项目根目录的「启动原型导出服务.command」，或执行：
   python3 scripts/prototype_server.py
@@ -27,36 +28,49 @@ from urllib.parse import quote, unquote, urlparse
 
 PORT = int(os.environ.get("PROTOTYPE_SERVER_PORT", "8765"))
 PROJECT_DIR = Path(__file__).resolve().parent.parent
-# 产物按「需求名」分文件夹后，原型位于 [需求名]/原型/*.html；
-# 旧的扁平结构 原型/*.html 仍兼容。两种都扫描。
+# 产物按「需求名」分文件夹后，原型/流程图位于 [需求名]/原型/、[需求名]/流程图/；
+# 旧的扁平结构 原型/、流程图/ 仍兼容。截图输出到原型/流程图所在需求目录下的
+# 原型截图/、流程图截图/（旧扁平结构回退到项目根的对应目录）。
 SERVER_URL = f"http://localhost:{PORT}"
 DEFAULT_VIEWPORT = {"width": 1440, "height": 900}
 EXPORT_DEVICE_SCALE = 2
 
+# 允许浏览器内编辑写回的产物子目录名（任意需求目录下的这些子目录，或项目根下的同名旧目录）
+WRITABLE_SUBDIR_NAMES = {"原型", "流程图", "需求文档", "需求挖掘", "验收清单", "数据分析"}
 
-def _all_prototype_htmls():
-    """收集项目内所有原型 HTML：新嵌套 [需求名]/原型/*.html + 旧扁平 原型/*.html。"""
+
+def _all_html_under(subdir_name):
+    """收集项目内某类产物的所有 HTML：新嵌套 [需求名]/<subdir>/*.html + 旧扁平 <subdir>/*.html。"""
     found = {}
-    for pattern in ("*/原型/*.html", "原型/*.html"):
+    for pattern in (f"*/{subdir_name}/*.html", f"{subdir_name}/*.html"):
         for path in PROJECT_DIR.glob(pattern):
             if path.is_file():
                 found[path.resolve()] = path
     return sorted(found.values(), key=lambda p: p.as_posix())
 
 
-def _output_dir_for(html_path):
-    """根据原型 HTML 的位置推导截图输出目录。
+def _all_prototype_htmls():
+    return _all_html_under("原型")
 
-    新嵌套：[需求名]/原型/x.html → [需求名]/原型截图/[feature]/
-    旧扁平：原型/x.html          → 原型截图/[feature]/
+
+def _output_root_for(html_path):
+    """根据原型/流程图 HTML 的位置推导截图输出根目录。
+
+    新嵌套：[需求名]/原型/x.html  → [需求名]/原型截图/
+            [需求名]/流程图/x.html → [需求名]/流程图截图/
+    旧扁平：原型/x.html / 流程图/x.html → 项目根 原型截图/ / 流程图截图/
     """
-    feature = _feature_name(html_path)
-    parent = html_path.resolve().parent          # .../原型
-    requirement_dir = parent.parent              # 新结构=[需求名]/，旧结构=项目根
-    if parent.name == "原型" and _is_under(requirement_dir, PROJECT_DIR) and requirement_dir != PROJECT_DIR.resolve():
-        return requirement_dir / "原型截图" / feature
-    # 旧扁平结构或异常位置：回退到项目根的 原型截图/
-    return PROJECT_DIR / "原型截图" / feature
+    parent = html_path.resolve().parent          # .../原型 或 .../流程图
+    kind = parent.name                            # "原型" / "流程图"
+    out_name = "流程图截图" if kind == "流程图" else "原型截图"
+    requirement_dir = parent.parent               # 新结构=[需求名]/，旧结构=项目根
+    if (
+        kind in ("原型", "流程图")
+        and _is_under(requirement_dir, PROJECT_DIR)
+        and requirement_dir != PROJECT_DIR.resolve()
+    ):
+        return requirement_dir / out_name
+    return PROJECT_DIR / out_name
 
 
 _state = {
@@ -97,6 +111,13 @@ def _first_prototype_html():
     return files[0] if files else None
 
 
+def _is_flow_html(html_path):
+    try:
+        return html_path.resolve().parent.name == "流程图"
+    except OSError:
+        return False
+
+
 def _resolve_html_path(raw_path):
     raw_path = raw_path or ""
 
@@ -132,6 +153,23 @@ def _resolve_html_path(raw_path):
             return resolved
 
     raise FileNotFoundError(f"找不到原型 HTML：{raw_path or '(empty)'}")
+
+
+def _resolve_writable_html_path(raw_path):
+    html_path = _resolve_html_path(raw_path)
+    parent = html_path.parent.resolve()
+    # 放行：项目内任意位置的「可写产物子目录」（如 [需求名]/需求文档/、原型/ 等），
+    # 同时兼容旧扁平结构（项目根下的同名目录）。父目录名需在白名单内且位于项目目录内。
+    if not (_is_under(parent, PROJECT_DIR) and parent.name in WRITABLE_SUBDIR_NAMES):
+        raise PermissionError(f"不允许保存到该目录：{html_path.parent}")
+    return html_path
+
+
+def _atomic_write_text(path, content):
+    tmp_path = path.with_name(f".{path.name}.tmp")
+    with tmp_path.open("w", encoding="utf-8", newline="") as file:
+        file.write(content)
+    os.replace(tmp_path, path)
 
 
 def _feature_name(html_path):
@@ -410,7 +448,9 @@ async def _run_screenshots(html_path, options=None):
 
     options = options or {}
     viewport = _normalize_viewport(options.get("viewport"))
-    output_dir = _output_dir_for(html_path)
+    # 截图直接放在一级目录（[需求名]/流程图截图/ 或 原型截图/），不再按 HTML 名多封一层子文件夹。
+    # 文件名已带 feature/场景前缀，避免同目录碰撞；清理时按本 HTML 的前缀只删自己上一轮产物。
+    output_dir = _output_root_for(html_path)
     source_labels = _extract_source_labels(html_path)
     files = []
     success = 0
@@ -419,7 +459,9 @@ async def _run_screenshots(html_path, options=None):
 
     try:
         output_dir.mkdir(parents=True, exist_ok=True)
-        for old_png in output_dir.glob("*.png"):
+        # 只清理本 HTML 上一轮的 PNG：流程图按 "{feature}-图*"，原型整目录归该需求所有。
+        cleanup_glob = f"{_feature_name(html_path)}-图*.png" if _is_flow_html(html_path) else "*.png"
+        for old_png in output_dir.glob(cleanup_glob):
             old_png.unlink()
 
         base_url = f"{SERVER_URL}{_relative_url_path(html_path)}"
@@ -432,44 +474,66 @@ async def _run_screenshots(html_path, options=None):
             )
             page = await context.new_page()
 
-            pages = await _discover_pages(page, html_path, source_labels)
-            await _force_tiled_mode(page)
-            await _wait_for_export_ready(page)
-            _update_state(total=len(pages))
-            used_names = set()
+            if _is_flow_html(html_path):
+                await page.goto(base_url, wait_until="networkidle", timeout=30000)
+                await _wait_for_export_ready(page)
+                containers = await page.locator(".chart-container").element_handles()
+                _update_state(total=len(containers))
+                used_names = set()
 
-            for index, item in enumerate(pages, 1):
-                label = _safe_filename(item["label"], fallback=item["page_id"])
-                filename = _dedupe_filename(f"{label}.png", used_names)
-                out_path = output_dir / filename
-                _update_state(progress=index - 1, current=label)
+                for index, handle in enumerate(containers, 1):
+                    label = f"{_feature_name(html_path)}-图{index}"
+                    filename = _dedupe_filename(f"{label}.png", used_names)
+                    out_path = output_dir / filename
+                    _update_state(progress=index - 1, current=label)
+                    try:
+                        await handle.scroll_into_view_if_needed(timeout=3000)
+                        await page.wait_for_timeout(150)
+                        await handle.screenshot(path=str(out_path), type="png", scale="device")
+                        files.append(str(out_path))
+                        success += 1
+                        _update_state(files=list(files))
+                    except Exception as error:
+                        print(f"  ⚠ [{label}] {error}")
+            else:
+                pages = await _discover_pages(page, html_path, source_labels)
+                await _force_tiled_mode(page)
+                await _wait_for_export_ready(page)
+                _update_state(total=len(pages))
+                used_names = set()
 
-                try:
-                    await _force_tiled_mode(page)
-                    await _set_tab(page, item.get("tab"))
-                    await _wait_for_export_ready(page)
-                    element = await _wait_for_visible_device(page, item["page_id"])
-                    await element.scroll_into_view_if_needed(timeout=3000)
-                    await page.wait_for_timeout(120)
-                    await element.screenshot(path=str(out_path), type="png", scale="device")
-                    files.append(str(out_path))
-                    success += 1
-                    _update_state(files=list(files))
-                except Exception as error:
-                    print(f"  ⚠ [{label}] {error}")
+                for index, item in enumerate(pages, 1):
+                    label = _safe_filename(item["label"], fallback=item["page_id"])
+                    filename = _dedupe_filename(f"{label}.png", used_names)
+                    out_path = output_dir / filename
+                    _update_state(progress=index - 1, current=label)
+
+                    try:
+                        await _force_tiled_mode(page)
+                        await _set_tab(page, item.get("tab"))
+                        await _wait_for_export_ready(page)
+                        element = await _wait_for_visible_device(page, item["page_id"])
+                        await element.scroll_into_view_if_needed(timeout=3000)
+                        await page.wait_for_timeout(120)
+                        await element.screenshot(path=str(out_path), type="png", scale="device")
+                        files.append(str(out_path))
+                        success += 1
+                        _update_state(files=list(files))
+                    except Exception as error:
+                        print(f"  ⚠ [{label}] {error}")
 
             await browser.close()
 
         _update_state(
             running=False,
-            progress=len(pages),
+            progress=success,
             current="完成",
             done=True,
             error=None,
             success_count=success,
             files=list(files),
         )
-        print(f"\n  🎉 截图完成：{success}/{len(pages)} 张 → {output_dir}\n")
+        print(f"\n  🎉 截图完成：{success} 张 → {output_dir}\n")
     except Exception as error:
         _update_state(running=False, done=True, error=str(error), current="导出失败")
         print(f"\n  ❌ 截图失败：{error}\n")
@@ -516,6 +580,8 @@ class Handler(BaseHTTPRequestHandler):
         path = unquote(self.path.split("?", 1)[0])
         if path == "/api/screenshot":
             self._handle_screenshot()
+        elif path == "/api/save-html":
+            self._handle_save_html()
         else:
             self._json({"error": "not found"}, 404)
 
@@ -550,14 +616,35 @@ class Handler(BaseHTTPRequestHandler):
             done=False,
             error=None,
             success_count=0,
-            output_dir=str(_output_dir_for(html_path)),
+            output_dir=str(_output_root_for(html_path) / _feature_name(html_path)),
             html=str(html_path),
             files=[],
         )
 
         thread = threading.Thread(target=_screenshot_thread, args=(html_path, options), daemon=True)
         thread.start()
-        self._json({"started": True, "html": str(html_path), "output_dir": str(_output_dir_for(html_path))})
+        self._json({"started": True, "html": str(html_path), "output_dir": str(_output_root_for(html_path) / _feature_name(html_path))})
+
+    def _handle_save_html(self):
+        try:
+            payload = self._read_json_body()
+            html_path = _resolve_writable_html_path(payload.get("path") or payload.get("html") or payload.get("url"))
+            content = payload.get("content")
+            if not isinstance(content, str) or not content.strip():
+                raise ValueError("保存内容为空")
+            if not content.lstrip().lower().startswith("<!doctype html"):
+                content = "<!DOCTYPE html>\n" + content
+            _atomic_write_text(html_path, content)
+        except Exception as error:
+            self._json({"ok": False, "error": str(error)}, 400)
+            return
+
+        self._json({
+            "ok": True,
+            "path": str(html_path),
+            "bytes": len(content.encode("utf-8")),
+            "saved_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+        })
 
     def _serve_file(self, url_path):
         if url_path == "/":
@@ -626,9 +713,12 @@ def main():
     print(f"{'─' * 56}")
     print(f"  项目路径：{PROJECT_DIR}")
     print(f"  原型预览：{first_url}")
-    print("  截图输出：[需求名]/原型截图/[原型文件名]/（旧扁平结构回退到 原型截图/）")
+    print("  截图输出：")
+    print("    [需求名]/原型/*.html  → [需求名]/原型截图/[原型文件名]/")
+    print("    [需求名]/流程图/*.html → [需求名]/流程图截图/[流程图文件名]/")
+    print("    （旧扁平结构 原型/、流程图/ 回退到项目根的 原型截图/、流程图截图/）")
     print(f"{'─' * 56}")
-    print("  👉 在浏览器里打开任一 原型/*.html，点击「一键导出所有截图」即可")
+    print("  👉 在浏览器里打开任一 [需求名]/原型/*.html 或 [需求名]/流程图/*.html，点击导出即可")
     print("  ⌃C  停止服务器\n")
 
     if not os.environ.get("PROTOTYPE_SERVER_NO_OPEN") and first:

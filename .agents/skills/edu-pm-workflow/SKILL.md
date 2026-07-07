@@ -31,7 +31,7 @@ Artifacts are organized **per requirement**: each requirement gets ONE top-level
 
 | User intent | Read this file first | Primary output |
 |---|---|---|
-| New requirement, PRD, prototype, flowchart, continue PRD work | `.agents/workflows/edu-pm-prd.md` | `[需求名]/需求文档/[需求名]-PRD.html`, `[需求名]/原型/[需求名]-prototype.html`, `[需求名]/流程图/[需求名]-flow.html` |
+| New requirement, PRD, prototype, flowchart, continue PRD work | `.agents/workflows/edu-pm-prd.md` | `[需求名]/需求文档/[需求名]-PRD.html`, `[需求名]/原型/[需求名]-prototype.html`, `[需求名]/流程图/[需求名]-flow.html`, `[需求名]/流程图/[需求名]-screenflow.html` (交互流程图, as needed) |
 | Demand discovery, user needs, competitive/product insight | `.agents/workflows/edu-pm-demand.md` | `[需求名]/需求挖掘/[需求名]-需求洞察.html` |
 | Acceptance checklist, test checklist, launch verification | `.agents/workflows/edu-pm-acceptance.md` | `[需求名]/验收清单/[需求名]-验收清单.html` |
 | Metrics, BI-style analysis, report from data | `.agents/workflows/edu-pm-data-analysis.md` | `[需求名]/数据分析/[需求名]-数据分析.html` |
@@ -41,7 +41,10 @@ For PRD work, treat `.agents/workflows/edu-pm-prd.md` as the authoritative proje
 ## PRD Workflow Rules
 
 - Confirm the requirement before writing when core information is missing; ask only focused questions.
-- **Tailor PRD sections to the requirement's size — do not force all sections.** Core skeleton always kept: 项目信息+版本记录, 需求背景, 需求目标, 详细方案. The other six (需求概述/流程图/异常边界/数据埋点/上线计划/附录) are dropped when the requirement doesn't need them (e.g. a tiny copy tweak needs no flowchart). Never drop sections silently — state which sections are kept/dropped and why during requirement confirmation, and get user sign-off first. If 流程图 is dropped, skip producing the flowchart file too. See edu-pm-prd.md §2.2 and §1.3.1.
+- **Tailor PRD sections to the requirement's size — do not force all sections.** Core skeleton always kept: 项目信息+版本记录, 需求背景, 需求目标, 详细方案. The other eight (需求概述/流程图/时序图/交互流程图/异常边界/数据埋点/上线计划/附录) are dropped when the requirement doesn't need them (e.g. a tiny copy tweak needs no flowchart). Never drop sections silently — state which sections are kept/dropped and why during requirement confirmation, and get user sign-off first. If 流程图 is dropped, skip producing the flowchart file; if 交互流程图 is dropped, skip producing the screenflow file. See edu-pm-prd.md §2.2 and §1.3.1.
+- **详细方案 description cells use the structured block format** (§2.3.1): 【页面元素】and【交互说明】are mandatory per row;【功能逻辑】【边界说明】【数据与内容规则】【前置条件与权限】【文案规范】only when applicable. Absolutely no technical API/interface wording anywhere in description cells.
+- **时序图 (sequence diagram)** is an optional dev/QA-facing PRD chapter placed AFTER 数据埋点 (the last body chapter): copyable **Mermaid source-code text blocks — never rendered images or iframes** (devs/QA reuse the text directly; a rendered picture was rejected). Contains an end-side orchestration `sequenceDiagram` (real participants, e.g. 用户/端/Cocos/服务端) plus a key-object `stateDiagram-v2`, each block with a "复制源码" button and 说明 bullets. Technical field/interface names ARE allowed in this chapter (the §2.3.1 ban only covers 详细方案 description cells). See edu-pm-prd.md §4.7.
+- **交互流程图 (screen flow)** is an optional PRD chapter placed before 详细方案: one whole image-style HTML canvas stitching all core screens (scaled live prototype iframes) with labeled **right-angle (Manhattan-routed) arrows** for navigation — never bezier curves or diagonal lines; same-side loop-back edges run on offset rails — plus an explicit state-machine legend. Produce per edu-pm-prd.md §4.6; export via the local screenshot service.
 - Produce HTML artifacts, not Markdown artifacts, unless the user asks otherwise.
 - Keep PRD, prototype, and flowchart synchronized. When one changes, inspect the other two for necessary updates.
 - The HTML prototype is the primary interactive artifact. Pencil is optional visual enhancement only.
@@ -65,7 +68,7 @@ Per-requirement folders at the project root; shared tooling stays at root.
   需求文档/                  PRD HTML
   原型/                     interactive prototype HTML and optional .pen
   原型截图/                  exported PNG screenshots (this requirement)
-  流程图/                    flowchart HTML
+  流程图/                    flowchart HTML + screenflow (交互流程图) HTML
   数据分析/                  data analysis reports (created on demand)
   验收清单/                  acceptance checklists (created on demand)
   需求挖掘/                  demand analysis reports (created on demand)

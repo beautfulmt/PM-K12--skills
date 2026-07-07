@@ -77,14 +77,14 @@ description: 教育PM需求产出工作流 — 输入需求描述，产出PRD+�
 
 > PRD 章节按需求大小裁剪（见 2.2）。在反向确认的同时，AI 必须**根据需求复杂度预判本次 PRD 拟保留/省略哪些章节，并先告知用户**，确认后再写。**不得默默省略。**
 
-- 评估方式：核心骨架（项目信息+版本记录、需求背景、需求目标、详细方案）始终保留；其余 6 个可选章节（需求概述/流程图/异常边界/数据埋点/上线计划/附录）按 2.2 的判断依据逐一评估留还是省。
+- 评估方式：核心骨架（项目信息+版本记录、需求背景、需求目标、详细方案）始终保留；其余 8 个可选章节（需求概述/流程图/交互流程图/异常边界/数据埋点/时序图/上线计划/附录）按 2.2 的判断依据逐一评估留还是省。
 - 在确认消息里附一行「本次章节」说明，例如：
   > 这个需求比较小（仅调整一处文案，无新流程/无新埋点），我打算这样组织 PRD：
   > - **保留**：项目信息、版本记录、需求背景、需求目标、详细方案
   > - **省略**：流程图（无多步骤流程）、数据埋点（无新事件）、上线计划（直接全量）、异常边界（无新场景）
   > 你看这样可以吗？或者有哪章你希望保留？
 - 用户若要求保留某章，则照办；用户认可后再进入撰写。
-- **产出物联动**：若省略「四、流程图」章节，则**不产出** `[需求名]/流程图/[需求名]-flow.html`（步骤四整步跳过）；若保留则正常产出。其余可选章节的省略只影响 PRD 内对应章节，不影响原型产出。
+- **产出物联动**：若省略「四、流程图」章节，则**不产出** `[需求名]/流程图/[需求名]-flow.html`（步骤四 4.1–4.5 跳过）；若省略「五、交互流程图」章节，则**不产出** `[需求名]/流程图/[需求名]-screenflow.html`（§4.6 跳过）；两者都省略则不产出 `[需求名]/流程图/` 目录。「九、时序图」是 PRD 内的文本章节（Mermaid 源码块，见 §4.7），不产出独立文件，省略则整章不写。其余可选章节的省略只影响 PRD 内对应章节，不影响原型产出。
 
 ### 1.4 确认后进入下一步
 
@@ -114,7 +114,7 @@ description: 教育PM需求产出工作流 — 输入需求描述，产出PRD+�
 | 📝 版本记录 | 变更历史表 |
 | 一、需求背景 | 为什么要做 |
 | 二、需求目标 | 要达成什么 |
-| 五、详细方案（四列表格：一级模块 \| 二级功能 \| 原型 \| 描述） | PRD 核心，绝不省 |
+| 六、详细方案（四列表格：一级模块 \| 二级功能 \| 原型 \| 描述） | PRD 核心，绝不省 |
 
 **② 按需裁剪（AI 根据需求判断是否需要，可整章省略）：**
 
@@ -122,9 +122,11 @@ description: 教育PM需求产出工作流 — 输入需求描述，产出PRD+�
 |------|----------|
 | 三、需求概述（功能清单表格） | 功能点极少（如仅 1-2 个）时可省，直接进详细方案 |
 | 四、流程图（嵌入交互式 iframe） | 无多步骤流程、无分支/状态流转的小需求 → 省 |
-| 六、异常与边界处理 | 不引入任何新异常/边界场景 → 省 |
-| 七、数据埋点 | 不涉及新增埋点事件 → 省 |
-| 八、上线计划与灰度策略 | 小需求直接全量上线、无灰度 → 省或一句话带过 |
+| 五、交互流程图（全部核心界面拼成一整张带箭头跳转链路图，嵌入 iframe，见 §4.6） | 核心界面 ≤2 个、或页面间无跳转链路且无状态流转 → 省 |
+| 七、异常与边界处理 | 不引入任何新异常/边界场景 → 省 |
+| 八、数据埋点 | 不涉及新增埋点事件 → 省 |
+| 九、时序图（Mermaid **源码文本块**：端侧互动编排总时序 + 关键对象状态图，研发/测试向，见 §4.7） | 无复杂端侧编排的简单需求（无语音/流式/多端协同/复杂动效状态机）→ 省 |
+| 十、上线计划与灰度策略 | 小需求直接全量上线、无灰度 → 省或一句话带过 |
 | 📎 附录（决策对齐表/产品风格定位等） | 无决策项、无特殊风格约定 → 省 |
 
 > **编号说明：** 章节编号（一～八）跟随实际保留的章节**连续重排**，不要因为省略了"四、流程图"就让正文出现"三、五"的跳号。即按保留章节重新顺序编号，但顺序仍遵循上表自上而下。
@@ -137,21 +139,68 @@ description: 教育PM需求产出工作流 — 输入需求描述，产出PRD+�
 
 | 一级模块 | 二级功能 | 原型 | 描述 |
 |----------|----------|------|------|
-| （使用rowspan合并相同模块） | 具体操作 | （原型iframe） | `<td contenteditable="true">` 0、功能说明 / 1、xxx / 2、xxx `</td>` |
+| （使用rowspan合并相同模块） | 具体操作 | （原型iframe） | 结构化分块描述，格式见 §2.3.1 |
 
-- 描述采用 **编号叙述法**：`0、功能说明` `1、页面元素` `2、交互逻辑` 等
 - 原型列放置对应界面的 `<iframe>` 嵌入
 - 一级模块使用 `rowspan` 合并跨行单元格
+
+#### 2.3.1 描述列结构化分块（必做）
+
+> 描述列按「页面」维度写，采用**固定分块结构**：块标题用【】标注，块内条目编号 `1、2、3…`，块与块之间空一行。先把页面本身说清楚，再说交互，最后按需补规则与边界。**废弃旧的 `0、功能说明 / 1、xxx` 松散编号叙述法。**
+
+**① 必出块（每行描述都要有，顺序固定在最前）：**
+
+| 分块 | 写什么 |
+|------|--------|
+| 【页面元素】 | 该页面**所有**元素自上而下逐一说明：布局区块、控件、文案、数据展示、入口/悬浮件。要求评审者只读这一块就能在脑中还原整个页面 |
+| 【交互说明】 | 逐条描述该页面的交互行为，统一用「操作 → 结果」句式（点击/长按/滑动/输入 → 跳转/弹层/Toast/状态变化） |
+
+**② 按需块（该页面涉及才写；不涉及就整块不出现，不硬凑、不写"无"）：**
+
+| 分块 | 写什么 | 出现条件 |
+|------|--------|----------|
+| 【功能逻辑】 | 该页面背后的功能规则与策略：次数扣减规则、排序规则、推荐/命中策略、优先级、频控等 | 页面涉及规则或策略时 |
+| 【边界说明】 | 该页面的所有边界情况**逐条穷举**：空态、极值/上限、权限不足、网络异常、超时、重复操作、并发冲突等 | 页面存在任何边界场景时 |
+| 【数据与内容规则】 | 展示内容的产品口径：数据从哪来（用户视角）、取数/排序规则、示例数据口径 | 列表页、报告页等数据驱动页面 |
+| 【前置条件与权限】 | 进入该页面/触发该功能的前置条件：登录态、剩余额度、年级/学科设置、不同角色可见性差异 | 页面有准入门槛或角色差异时 |
+| 【文案规范】 | 关键文案的**确切措辞**：按钮文字、Toast、空态文案、弹窗标题/正文，防止开发自行发挥 | 文案需要精确锁定时 |
+
+**③ 硬性禁令（极度重要）：** 描述列**不得出现任何技术接口说明**——不写 API 名称、请求参数、字段 key、错误码、表结构、缓存/存储方案。一律用产品语言表述：写「上传成功后当日剩余额度减 1」，不写「调用 quota/deduct 接口扣减」。
+
+**④ 示例（一行描述列的完整形态）：**
+
+```
+【页面元素】
+1、顶部导航栏：标题"试卷分析"+左侧返回按钮
+2、额度卡片：文案"hello-你的分析剩余额度"+剩余次数"8/10"
+3、分析历史列表：每项含试卷名称、状态标签、创建日期
+4、右下角悬浮相机按钮：常驻
+
+【交互说明】
+1、点击历史列表项 → 进入该试卷的分析报告页
+2、点击悬浮相机按钮 → 唤起"选择拍照类型"半屏弹层
+
+【功能逻辑】
+1、分析历史按创建时间倒序排列
+2、上传成功即扣减 1 次额度，分析失败自动返还
+
+【边界说明】
+1、无历史记录 → 展示空态插画+文案"暂无分析记录"+拍照引导按钮
+2、剩余额度为 0 → 相机按钮置灰，点击 Toast 提示"今日额度已用完"
+3、网络异常 → 列表加载失败，展示重试按钮
+```
+
+> **一致性联动：** 原型 ↔ PRD 对齐（3.1 第12条、3.6 自查）以【页面元素】【交互说明】【文案规范】的内容为对照基准；【边界说明】覆盖的场景与「七、异常与边界处理」章节（若保留）保持互相印证、不冲突。
 
 ### 2.4 写作风格
 
 - 先图（原型）后文
-- 逐条编号描述交互规则
-- **极度重要：** 必须给 “描述” 列对应的 `<td>` 元素添加 `contenteditable="true"` 和 `style="outline: none;"` 属性（让文案在浏览器中可直接编辑）。
-- **极度重要：** 必须在 HTML 底部插入“悬浮双重动作面板”，代码大纲如下（AI需补全标准JS）：
-  1. 监听所有 `contenteditable="true"` 的 `blur` 事件，如果内容被修改，则为该 `td` 添加 `data-changed="true"` 属性和绿色的 `edited-cell` 高亮类。
-  2. 页面右下角的悬浮 `.save-btn-container` 区只保留一个按钮：“保存并通知AI”。截图导出功能已移至原型和流程图各自的 HTML 中，PRD 不再承载导出功能。
-  3. 点击保存按钮时，抓取 `document.documentElement.outerHTML` 并调用系统的文件保存句柄直接物理存档覆盖当前 PRD HTML 文件。
+- 逐条编号描述交互规则；详细方案「描述」列一律按 §2.3.1 的【】分块结构组织
+- **极度重要（全文档可编辑）：** PRD **整篇正文**都要能在浏览器里直接改——不再只让「描述」列可编辑。具体的可编辑范围、排除项、表格增删行与行列拖拽，全部由 **§2.7 通用编辑模块** 统一实现并固化为必做项；§2.4 这里只描述配套的保存动作。
+- **极度重要：** 必须在 HTML 底部插入“悬浮动作面板”，代码大纲如下（AI需补全标准JS）：
+  1. 编辑变更追踪：所有可编辑块的 `blur` 事件，如内容相对 `data-original` 被修改，则为该块加 `data-changed="true"` 属性和绿色 `edited-cell` 高亮类（追踪逻辑由 §2.7 模块统一提供，无需另写）。
+  2. 页面右下角的悬浮 `.save-btn-container` 区只保留一个按钮：“保存并通知AI”。截图导出功能已移至原型和流程图各自的 HTML 中，PRD 不再承载导出功能。另：**页面左下角**固定一个「📋 一键复制全文」按钮（实现见 §2.8），与右下角保存按钮分居两侧、互不遮挡。
+  3. 点击保存按钮时，抓取 `document.documentElement.outerHTML` 并调用系统的文件保存句柄直接物理存档覆盖当前 PRD HTML 文件。**因为保存抓的是 `outerHTML`，§2.7 把列宽/行高写成 inline px、把编辑写回 DOM，保存即自动持久化，无需额外存储逻辑。**
 - 黄色高亮标注关键变更点（用 `.alert` 样式块）
 - 必须覆盖异常和边界情况
 
@@ -159,14 +208,14 @@ description: 教育PM需求产出工作流 — 输入需求描述，产出PRD+�
 
 - 页面最大宽度设为 `1400px`（允许原型列有足够展示空间）
 - 表格使用 `table-layout: fixed`
-- 各列推荐宽度：一级模块 `100px`，二级功能 `100px`，原型 `350px`，描述自动扩展
-- `th` 和 `td` 不要默认启用 CSS `resize`；它容易留下拖拽残影并破坏表格截图。需要调整预览面积时，优先使用 PRD 右侧双栏预览或原型 iframe 自身的缩放手柄。
+- 各列推荐宽度：一级模块 `100px`，二级功能 `100px`，原型 `350px`，描述自动扩展（用 `<colgroup><col>` 承载列宽，便于拖拽时改 `col.style.width`）
+- **不要**用 CSS `resize`（`resize:both/horizontal`）来调列宽行高——它会留拖拽残影、破坏表格截图。列宽/行高改用 **§2.7 的专用拖拽手柄**：手柄 `hover` 才出现、拖拽写 **inline px** 尺寸随 `outerHTML` 持久化、鼠标移开即隐藏，静态截图保持干净。
 - `td` 设置 `word-break: break-word` 避免文字溢出
 - **极度重要（原型预览体验）：** PRD 中的原型 iframe 不要直接按原始尺寸硬塞进表格单元格，尤其是 16:9 横屏课堂原型。必须使用“等比例缩放容器”包裹 iframe，并在每个原型预览右下角提供直接拖拽的缩放手柄，拖拽时原型整体按比例同步变化，避免再额外做独立操作面板。
 
 ### 2.6 右侧双栏交互原型预览（必做）
 
-> **背景（踩坑记录）：** 这套右侧「交互原型预览」面板长期只活在历史 PRD 成品里（如 `AI试卷分析-PRD.html`），从未沉淀成规范，导致从零写 PRD 时容易漏掉（2.4 又只让放保存按钮）。**故在此固化为必做项：每份 PRD 都要内建该面板。** 它与「五、详细方案」表格里的静态原型列（截图/小 iframe）不同——这是一个全局常驻、可切页、可缩放的活预览 dock。
+> **背景（踩坑记录）：** 这套右侧「交互原型预览」面板长期只活在历史 PRD 成品里（如 `AI试卷分析-PRD.html`），从未沉淀成规范，导致从零写 PRD 时容易漏掉（2.4 又只让放保存按钮）。**故在此固化为必做项：每份 PRD 都要内建该面板。** 它与「六、详细方案」表格里的静态原型列（截图/小 iframe）不同——这是一个全局常驻、可切页、可缩放的活预览 dock。
 
 **目标：** PRD 左侧正文 + 右侧一个可关闭的深色面板，面板内嵌**活的原型 iframe**，用顶部下拉切换页面/场景，支持拖拽改宽，整体等比缩放。
 
@@ -211,7 +260,263 @@ window.addEventListener('load', ()=>{ /* renderSelect() */ switchPage(previewPag
 
 **⑥ 与 3.4.2 联动：** 原型内切页时 `postMessage({type:'page-changed',page})`，PRD 既有监听同步 `#pageSelect`（向后兼容）。
 
-**⑦ 裁剪与迭代：** 仅 1 个原型页时可省下拉、只留单页预览，但**面板本身默认保留**；新增页必须同步往 `CATALOG` / `#pageSelect` 加项（见 5.3 第 14 项「PRD 双栏预览下拉项」）。
+**⑦ 裁剪与迭代：** 仅 1 个原型页时可省下拉、只留单页预览，但**面板本身默认保留**；新增页必须同步往 `CATALOG` / `#pageSelect` 加项（见 5.3 第 16 项「PRD 双栏预览下拉项」）。
+
+**⑧ 滚动联动 / scroll-spy（必做）：** 左侧正文滚到某模块，右侧交互预览**自动切到该模块对应的原型页**（滚到「界面1」→预览定位界面1，滚到「界面3」→跟随切界面3），不用手点下拉。
+- **取材：** 给「六、详细方案」每个**一级模块单元格**（`td.mod`，或模块首行 `<tr>`）加 `data-preview="<CATALOG 里对应页的 value>"`。新增模块/页时必须同步补这个属性（并入 5.3 迭代清单）。
+- **激活判定：** 监听 `window` 滚动（`requestAnimationFrame` 节流），取视口上方约 35% 处「激活线」**之上最后一个** `data-preview` 元素为当前模块；`v !== previewPage` 时才 `switchPage(v)`（避免反复重载 iframe）；仅 `body.dual-pane` 打开时生效。
+- **不与用户打架：** 监听 `#pageSelect` 的 `change`，用户**手动选页**后短暂（~4s）暂停联动（`switchPage` 程序化改 `select.value` 不会触发 `change`，故自动切不会误锁）。
+
+```js
+function initPreviewScrollSync(){
+  var nodes = Array.prototype.slice.call(document.querySelectorAll('.scheme-table [data-preview]'));
+  if(!nodes.length) return;
+  var lockUntil = 0, sel = document.getElementById('pageSelect');
+  if(sel) sel.addEventListener('change', function(){ lockUntil = Date.now() + 4000; });
+  function pickActive(){
+    if(!document.body.classList.contains('dual-pane') || Date.now() < lockUntil) return;
+    var line = window.innerHeight * 0.35, current = null;
+    for(var i=0;i<nodes.length;i++){ if(nodes[i].getBoundingClientRect().top <= line) current = nodes[i]; }
+    if(!current) current = nodes[0];
+    var v = current.getAttribute('data-preview');
+    if(v && v !== previewPage) switchPage(v);
+  }
+  var ticking = false;
+  function onScroll(){ if(ticking) return; ticking = true; requestAnimationFrame(function(){ pickActive(); ticking = false; }); }
+  window.addEventListener('scroll', onScroll, { passive:true });
+  window.addEventListener('resize', onScroll);
+  pickActive();
+}
+// 在 window load 里：renderSelect(); switchPage(previewPage); initPreviewScrollSync();
+```
+
+### 2.7 全文档可编辑 · 表格行列拖拽 · 全表增删行（必做）
+
+> **背景（踩坑记录）：** 旧版只给「六、详细方案」描述列加 `contenteditable`、只有详细方案表能增删行；其余正文（背景/目标/版本记录/埋点…）在浏览器里都改不了，且 §2.5 旧规曾**禁用**列宽行高调整。**现固化为必做项：每份 PRD 都内建下面这套自包含的「通用编辑模块」**，一次性提供①全文档可编辑 ②全表增删行 ③列宽/行高拖拽。模块**幂等、纯内嵌、无外部依赖**，直接整段贴进 PRD 底部 `<script>`（在保存按钮逻辑之前），无需逐个单元格手写 `contenteditable`。
+
+**① 能力与边界**
+- **全文档可编辑：** 自动给正文内容块（`td/th/p/li/h1~h4/.alert/blockquote/dd/dt`）加 `contenteditable` 并接管变更追踪（`blur` 后内容变化 → `data-changed="true"` + `.edited-cell` 高亮）。
+- **reload 安全（极易踩坑）：** 「已接管」「原始内容」用内存态 `WeakMap`/`WeakSet` 守卫，**绝不把 `data-pm-tracked`/`data-original` 写进 DOM**——否则保存（`outerHTML`）后这些脏属性被存档，重新打开时守卫命中、`blur` 监听不再挂载，编辑高亮静默失效。仅 `contenteditable`、`data-changed`、`.edited-cell` 会随存档保留（前者保持可编辑、后两者作为评审标记，符合预期）。
+- **排除项（保持交互骨架不被误编辑）：** 右侧 `.prototype-sidebar` 预览面板、`.fab-group`/`.save-btn(-container)`/`.dual-pane-toggle` 悬浮按钮、各拖拽手柄、`.pm-anchor`、`iframe`/`script`/`style`/`button`；**含 `img`/`iframe`/`table`/`video`/`canvas` 的容器单元格（详细方案「原型」列无论用 iframe 还是截图 `<img>`）整体不接管**，避免原型/截图被改坏。
+- **全表增删行：** 作用于**所有数据表**（版本记录/功能清单/详细方案/埋点…）。**表头行自动识别**：整行均为 `<th>`（含写在 `<tbody>` 里的表头行）或位于 `<thead>` 的行都不加增删/行高控件、仅用于列宽手柄定位。每个数据行首格 `hover` 出现 `＋`（下方插一行）/`－`（删除本行，留 1 行兜底）；新行克隆结构、**去掉 `id`/`rowspan`/`colspan`** 防重复 id、清空文本、自动接管编辑。
+- **列宽/行高拖拽：** 表头每列右缘 `.col-resizer`（改 `<col>` 宽，下限 48px）、每数据行首格下缘 `.row-resizer`（改 `tr` 高，下限 24px）。手柄默认 `opacity:0`、`hover` 才显、写 inline px → 随 `outerHTML` 保存，且静态截图无残影。无 `<colgroup>` 的表会按表头单元格当前宽度自动补一个。
+
+**② CSS 关键（手柄一律 hover-only）：**
+```css
+.edited-cell { background:#e8f5e9 !important; }
+.editable-table-wrap { position:relative; margin:14px 0; }
+.editable-table-wrap > table { margin:0 !important; }
+.pm-anchor { position:relative; }
+.row-ctrl { position:absolute; left:-30px; display:flex; flex-direction:column; gap:3px; opacity:0; pointer-events:none; transition:opacity .15s; z-index:4; }
+tr:hover > * .pm-anchor > .row-ctrl, tr:hover .pm-anchor > .row-ctrl { opacity:1; pointer-events:auto; }
+.row-ctrl button { width:22px; height:18px; border:none; border-radius:5px; cursor:pointer; color:#fff; font-size:13px; font-weight:700; line-height:1; }
+.row-add { background:#00b894; } .row-del { background:#e74c3c; }
+.editable-table-remove { position:absolute; top:-12px; right:8px; z-index:5; border:none; border-radius:999px; background:rgba(231,76,60,.96); color:#fff; font-size:12px; padding:6px 10px; cursor:pointer; opacity:0; pointer-events:none; transition:opacity .15s; }
+.editable-table-wrap:hover .editable-table-remove { opacity:1; pointer-events:auto; }
+.col-resizer { position:absolute; top:0; right:0; width:9px; height:100%; cursor:col-resize; transform:translateX(50%); z-index:3; opacity:0; transition:opacity .15s; }
+.col-resizer::after { content:''; position:absolute; left:4px; top:0; width:2px; height:100%; background:#00b894; opacity:0; transition:opacity .15s; }
+th:hover .col-resizer, td:hover .col-resizer, body.col-resizing .col-resizer.active { opacity:1; }
+.col-resizer:hover::after, body.col-resizing .col-resizer.active::after { opacity:1; }
+.row-resizer { position:absolute; left:0; bottom:0; width:100%; height:9px; cursor:row-resize; transform:translateY(50%); z-index:3; }
+.row-resizer::after { content:''; position:absolute; top:4px; left:0; width:100%; height:2px; background:#00b894; opacity:0; transition:opacity .15s; }
+.row-resizer:hover::after, body.row-resizing .row-resizer.active::after { opacity:1; }
+body.col-resizing, body.row-resizing { user-select:none !important; }
+body.col-resizing { cursor:col-resize !important; } body.row-resizing { cursor:row-resize !important; }
+```
+
+**③ JS 模块（已在无头 Chrome 对真实 PRD 结构实测全绿：全文档可编辑/排除 img 原型列/`<th>`-in-`<tbody>` 表头识别/增删行/列宽±与48px下限/行高/edited 高亮/无脏属性泄漏/幂等再init，整段照贴）：**
+```js
+(function () {
+  var EDITABLE_BLOCK_SELECTOR = 'td, th, p, li, h1, h2, h3, h4, .alert, blockquote, dd, dt';
+  var EXCLUDE_SELECTOR = '.prototype-sidebar, .fab-group, .save-btn, .save-btn-container, .dual-pane-toggle, ' +
+    '.col-resizer, .row-resizer, .row-ctrl, .pm-anchor, .editable-table-remove, script, style, iframe, button';
+  var SKIP_CELL_CONTENT = 'table, iframe, video, canvas, img';   // 含这些的容器格不整体接管（如原型/截图列）
+  var origMap = new WeakMap(), rowDone = new WeakSet();
+  function isExcluded(el){ return !!(el.closest && el.closest(EXCLUDE_SELECTOR)); }
+  function isHeaderRow(tr){ return tr.cells.length > 0 && Array.prototype.every.call(tr.cells, function(c){ return c.tagName === 'TH'; }); }
+  function headerRowOf(table){
+    if (table.tHead && table.tHead.rows[0]) return table.tHead.rows[0];
+    for (var i=0;i<table.rows.length;i++) if (isHeaderRow(table.rows[i])) return table.rows[i];
+    return table.rows[0] || null;
+  }
+  function markEditableCellChanged(el){ if(!el) return; el.setAttribute('data-changed','true'); el.classList.add('edited-cell'); }
+  function trackEditable(el){
+    if (origMap.has(el)) return; origMap.set(el, el.innerHTML);   // 内存态守卫，不写入 HTML
+    el.setAttribute('contenteditable','true'); el.style.outline='none';
+    el.addEventListener('blur', function(){ if(this.innerHTML !== origMap.get(this)) markEditableCellChanged(this); });
+  }
+  function makeDocumentEditable(root){
+    (root||document).querySelectorAll(EDITABLE_BLOCK_SELECTOR).forEach(function(el){
+      if (isExcluded(el)) return;
+      if (el.querySelector(SKIP_CELL_CONTENT)) return;
+      trackEditable(el);
+    });
+  }
+  function wrapTable(table){
+    if (table.closest('.editable-table-wrap')) return table.closest('.editable-table-wrap');
+    var wrap=document.createElement('div'); wrap.className='editable-table-wrap'; wrap.setAttribute('contenteditable','false');
+    table.parentNode.insertBefore(wrap, table); wrap.appendChild(table);
+    var rm=document.createElement('button'); rm.type='button'; rm.className='editable-table-remove'; rm.textContent='删除表格';
+    rm.addEventListener('click', function(e){ e.preventDefault(); wrap.remove(); }); wrap.appendChild(rm); return wrap;
+  }
+  function blankRowFrom(tr){
+    var clone=tr.cloneNode(true); clone.style.height=''; clone.removeAttribute('id');
+    Array.prototype.forEach.call(clone.cells, function(c){
+      c.removeAttribute('rowspan'); c.removeAttribute('colspan'); c.removeAttribute('id');
+      c.removeAttribute('data-changed'); c.classList.remove('edited-cell');
+      c.querySelectorAll('.row-ctrl, .col-resizer, .row-resizer, .pm-anchor').forEach(function(n){
+        if(n.classList.contains('pm-anchor')){ while(n.firstChild) n.parentNode.insertBefore(n.firstChild,n); n.remove(); } else n.remove();
+      });
+      if(!c.querySelector('iframe, img, video, canvas')) c.innerHTML='<br>';
+      c.removeAttribute('contenteditable');
+    });
+    return clone;
+  }
+  function installRowControls(tr){
+    var first=tr.cells[0]; if(!first || first.querySelector(':scope > .pm-anchor > .row-ctrl')) return;
+    first.style.position='relative';
+    var anchor=document.createElement('span'); anchor.className='pm-anchor'; anchor.setAttribute('contenteditable','false');
+    var ctrl=document.createElement('span'); ctrl.className='row-ctrl';
+    var add=document.createElement('button'); add.type='button'; add.className='row-add'; add.textContent='+'; add.title='在下方插入一行';
+    var del=document.createElement('button'); del.type='button'; del.className='row-del'; del.textContent='−'; del.title='删除本行';
+    add.addEventListener('click', function(e){ e.preventDefault(); var nr=blankRowFrom(tr); tr.parentNode.insertBefore(nr, tr.nextSibling); decorateRow(nr); makeDocumentEditable(nr); });
+    del.addEventListener('click', function(e){ e.preventDefault(); var body=tr.parentNode; var dataRows=Array.prototype.filter.call(body.rows, function(r){return !isHeaderRow(r);}); if(dataRows.length<=1) return; tr.remove(); });
+    ctrl.appendChild(add); ctrl.appendChild(del); anchor.appendChild(ctrl); first.insertBefore(anchor, first.firstChild);
+  }
+  function ensureCols(table){
+    if (table.querySelector('colgroup')) return table.querySelector('colgroup');
+    var headRow=headerRowOf(table); if(!headRow) return null;
+    var cg=document.createElement('colgroup');
+    for(var i=0;i<headRow.cells.length;i++){ var col=document.createElement('col'); col.style.width=headRow.cells[i].offsetWidth+'px'; cg.appendChild(col); }
+    table.insertBefore(cg, table.firstChild); return cg;
+  }
+  function installColResizers(table){
+    var cg=ensureCols(table); if(!cg) return; var cols=cg.querySelectorAll('col');
+    var headRow=headerRowOf(table); if(!headRow) return;
+    Array.prototype.forEach.call(headRow.cells, function(th, idx){
+      if(idx>=cols.length) return; if(th.querySelector(':scope > .col-resizer')) return;
+      th.style.position='relative';
+      var h=document.createElement('span'); h.className='col-resizer'; h.setAttribute('contenteditable','false');
+      h.addEventListener('mousedown', function(e){
+        e.preventDefault(); e.stopPropagation();
+        var startX=e.clientX, startW=cols[idx].offsetWidth||th.offsetWidth;
+        h.classList.add('active'); document.body.classList.add('col-resizing');
+        function mv(ev){ cols[idx].style.width=Math.max(48, startW+(ev.clientX-startX))+'px'; }
+        function up(){ document.removeEventListener('mousemove',mv); document.removeEventListener('mouseup',up); h.classList.remove('active'); document.body.classList.remove('col-resizing'); }
+        document.addEventListener('mousemove',mv); document.addEventListener('mouseup',up);
+      });
+      th.appendChild(h);
+    });
+  }
+  function installRowResizer(tr){
+    var first=tr.cells[0]; if(!first || first.querySelector(':scope > .row-resizer')) return;
+    first.style.position='relative';
+    var h=document.createElement('span'); h.className='row-resizer'; h.setAttribute('contenteditable','false');
+    h.addEventListener('mousedown', function(e){
+      e.preventDefault(); e.stopPropagation();
+      var startY=e.clientY, startH=tr.offsetHeight;
+      h.classList.add('active'); document.body.classList.add('row-resizing');
+      function mv(ev){ tr.style.height=Math.max(24, startH+(ev.clientY-startY))+'px'; }
+      function up(){ document.removeEventListener('mousemove',mv); document.removeEventListener('mouseup',up); h.classList.remove('active'); document.body.classList.remove('row-resizing'); }
+      document.addEventListener('mousemove',mv); document.addEventListener('mouseup',up);
+    });
+    first.appendChild(h);
+  }
+  function decorateRow(tr){ if(rowDone.has(tr) || isHeaderRow(tr) || tr.closest('thead')) return; rowDone.add(tr); installRowControls(tr); installRowResizer(tr); }
+  function installTableControls(root){
+    (root||document).querySelectorAll('table').forEach(function(table){
+      if(isExcluded(table) || table.closest('.no-edit')) return;
+      wrapTable(table); installColResizers(table);
+      Array.prototype.forEach.call(table.rows, decorateRow);
+    });
+  }
+  function init(root){ installTableControls(root); makeDocumentEditable(root); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', function(){ init(document); }); else init(document);
+  window.PMEdit={ init:init, makeDocumentEditable:makeDocumentEditable, installTableControls:installTableControls };
+})();
+```
+
+**④ 接入约定：**
+- 详细方案及其它定宽表必须带 `<colgroup><col>`（见 §2.5），列宽拖拽改的就是这些 `<col>`。
+- 某张表确实不想被编辑/加控件时，给该 `<table>` 加 `class="no-edit"` 豁免（如纯展示装饰表）。
+- **迭代联动（接 §5.3）：** 新增表格/新增整块正文后，调用 `PMEdit.init(新节点)` 让控件对新节点幂等生效；`PMEdit.init`、`installTableControls`、`makeDocumentEditable` 均可重复安全调用，不会重复加手柄。
+- 保存仍走 §2.4 的「💾 保存并通知AI」按钮抓 `outerHTML`；编辑内容、`edited-cell`、inline 列宽/行高都会一并落盘。
+
+### 2.8 左下角「一键复制全文」（必做）
+
+> **目的：** 方便把整份 PRD 一键拷到钉钉/飞书/Word 等外部文档。复制必须是**富文本**（`text/html`，保留表格/标题/加粗/列表），并在导出前**剥离所有交互骨架与编辑痕迹**，否则粘出去会带一堆手柄、绿色高亮和 `contenteditable` 脏属性。
+
+**① 按钮：** 页面**左下角**固定一个 `.copy-all-fab`（`position:fixed; left:28px; bottom:28px`），`onclick="copyAllContent()"`，文案「📋 一键复制全文」。与右下角 `.fab-group`（双栏/保存）分居两侧；双栏打开时右侧面板不影响左下角，无需偏移。另配一个 `.copy-toast`（左下、`bottom:80px`）做轻量结果反馈，默认 `opacity:0`、`.show` 时淡入，2 秒后自动隐藏。
+
+**② 导出清洗（关键）：** `document.body.cloneNode(true)` 后，在副本上：
+- **删除交互骨架**：`.prototype-sidebar`、`.fab-group`、`.copy-all-fab`、`.copy-toast`、`.col-resizer`、`.row-resizer`、`.row-ctrl`、`.pm-anchor`、`.editable-table-remove`、`script`/`noscript`、以及 `iframe`（流程图/原型 iframe 粘不过去）。
+- **解包**：`.editable-table-wrap` 用其内部 `<table>` 替换自身。
+- **去编辑痕迹**：移除所有 `contenteditable`、`data-changed`/`data-original`/`data-orig`/`data-pm-tracked` 属性与 `.edited-cell` 类。
+- **补排版**：给 `table` 补 `border-collapse/width`、给 `th,td` 补 `1px` 边框+内边距、`th` 补浅底色（内联 style，确保粘到无样式环境也有框）；把 `img` 的 `src` 绝对化（`img.setAttribute('src', img.src)`）。
+
+**③ 写剪贴板：** 优先 `navigator.clipboard.write([new ClipboardItem({'text/html':blobHtml,'text/plain':blobText})])`（`text/plain` = 清洗后 `clone.innerText` 兜底）；不支持或被拒时**回退**到离屏 `contenteditable` 容器 + 选区 + `document.execCommand('copy')`。成功/失败都用 `.copy-toast` 提示。
+
+**④ JS（已在无头 Chrome 实测：富文本含表格/加粗、骨架与编辑痕迹全无、内联边框、图片绝对化、纯文本兜底全绿，整段照贴）：**
+```js
+(function(){
+  function buildExportClone(){
+    var clone = document.body.cloneNode(true);
+    clone.querySelectorAll('.prototype-sidebar, .fab-group, .copy-all-fab, .copy-toast, .col-resizer, .row-resizer, .row-ctrl, .pm-anchor, .editable-table-remove, script, noscript').forEach(function(n){ n.remove(); });
+    clone.querySelectorAll('.editable-table-wrap').forEach(function(w){ var t=w.querySelector('table'); if(t) w.replaceWith(t); else w.remove(); });
+    clone.querySelectorAll('iframe').forEach(function(f){ f.remove(); });
+    clone.querySelectorAll('[contenteditable]').forEach(function(el){ el.removeAttribute('contenteditable'); });
+    ['data-changed','data-original','data-orig','data-pm-tracked'].forEach(function(a){ clone.querySelectorAll('['+a+']').forEach(function(el){ el.removeAttribute(a); }); });
+    clone.querySelectorAll('.edited-cell').forEach(function(el){ el.classList.remove('edited-cell'); });
+    clone.querySelectorAll('table').forEach(function(t){ t.style.borderCollapse='collapse'; t.style.width='100%'; });
+    clone.querySelectorAll('th,td').forEach(function(c){ c.style.border='1px solid #ccc'; c.style.padding='6px 10px'; c.style.verticalAlign='top'; });
+    clone.querySelectorAll('th').forEach(function(c){ if(!c.style.background) c.style.background='#f2f1f8'; });
+    clone.querySelectorAll('img').forEach(function(img){ try{ img.setAttribute('src', img.src); }catch(e){} });
+    return clone;
+  }
+  function showToast(msg, err){
+    var t=document.querySelector('.copy-toast');
+    if(!t){ t=document.createElement('div'); t.className='copy-toast'; document.body.appendChild(t); }
+    t.textContent=msg; t.style.background= err? '#c0392b' : '#2a2459'; t.classList.add('show');
+    clearTimeout(showToast._t); showToast._t=setTimeout(function(){ t.classList.remove('show'); }, 2200);
+  }
+  async function copyAllContent(){
+    var clone=buildExportClone();
+    var html='<meta charset="utf-8">'+clone.innerHTML;
+    var text=clone.innerText;
+    try{
+      if(navigator.clipboard && window.ClipboardItem){
+        await navigator.clipboard.write([new ClipboardItem({
+          'text/html': new Blob([html],{type:'text/html'}),
+          'text/plain': new Blob([text],{type:'text/plain'})
+        })]);
+        showToast('已复制全文，可直接粘贴到钉钉/飞书/Word'); return;
+      }
+      throw new Error('no async clipboard');
+    }catch(e){
+      try{
+        var holder=document.createElement('div'); holder.setAttribute('contenteditable','true');
+        holder.style.cssText='position:fixed;left:-99999px;top:0;opacity:0;'; holder.innerHTML=html;
+        document.body.appendChild(holder);
+        var range=document.createRange(); range.selectNodeContents(holder);
+        var sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+        var okc=document.execCommand('copy'); sel.removeAllRanges(); holder.remove();
+        if(okc){ showToast('已复制全文，可直接粘贴到钉钉/飞书/Word'); } else { throw new Error('execCommand 拒绝'); }
+      }catch(e2){ showToast('复制失败，请手动全选复制：'+(e2.message||e2), true); }
+    }
+  }
+  window.copyAllContent=copyAllContent;
+})();
+```
+
+**⑤ CSS 草图：**
+```css
+.copy-all-fab { position:fixed; left:28px; bottom:28px; z-index:1001; background:#fff; color:#3b357a; border:1px solid #d8d4f0; border-radius:12px; padding:13px 20px; font-size:14px; font-weight:700; cursor:pointer; box-shadow:0 4px 16px rgba(91,91,214,.18); display:flex; align-items:center; gap:8px; }
+.copy-all-fab:hover { transform:translateY(-2px); border-color:#5b5bd6; }
+.copy-toast { position:fixed; left:28px; bottom:80px; z-index:1002; max-width:360px; background:#2a2459; color:#fff; padding:11px 16px; border-radius:10px; font-size:13px; box-shadow:0 8px 24px rgba(20,16,70,.28); opacity:0; transform:translateY(8px); pointer-events:none; transition:opacity .2s, transform .2s; }
+.copy-toast.show { opacity:1; transform:translateY(0); }
+```
+
+> **取材限制（据实说明，勿夸大）：** 本地相对路径的截图/iframe 粘到钉钉云文档时通常不会自动上传，复制以**文本+表格结构**为主；图片可能需要在目标文档里重新插入。
 
 ---
 
@@ -234,7 +539,7 @@ window.addEventListener('load', ()=>{ /* renderSelect() */ switchPage(previewPag
 10. 保存路径：`[需求名]/原型/[需求名]-prototype.html`（相对于项目根目录）
 11. 原型 HTML 底部必须加入 `<script src="../../scripts/prototype-export-client.js?v=YYYYMMDD"></script>`，导出按钮使用 `id="exportFab"` 或 `.export-btn`，不要绑定旧的 `html-to-image` 导出函数。
     > **路径说明：** 原型位于 `[需求名]/原型/`，而导出脚本在项目根目录 `scripts/` 共享，因此需 `../../`（退两级）回到根目录再进 `scripts/`。
-12. **极度重要（原型 ↔ PRD 内容对齐）：** 原型中展示的所有文案、数据、状态标签、按钮文字、提示信息必须与 PRD「五、详细方案」中对应行的「描述」列内容逐条一致。具体对齐规则：
+12. **极度重要（原型 ↔ PRD 内容对齐）：** 原型中展示的所有文案、数据、状态标签、按钮文字、提示信息必须与 PRD「六、详细方案」中对应行的「描述」列内容逐条一致。具体对齐规则：
     - **文案对齐**：原型中的标题、按钮文字、提示文案、空状态文案必须与 PRD 描述中的文字完全一致，不允许原型上写"开始分析"而 PRD 写"立即分析"
     - **数据对齐**：原型中使用的示例数据（如"剩余额度 8/10次"、"综合得分 82分"）必须与 PRD 描述中提到的数据保持一致
     - **状态对齐**：原型中展示的状态标签（已完成/分析中/失败等）及其颜色必须与 PRD 描述的状态定义一致
@@ -569,7 +874,7 @@ Pencil 设计稿完成后，**必须反向校准 HTML 原型**使两端视觉一
     ↓
 逐页读取原型 HTML 中的文案/数据/状态
     ↓
-对照 PRD「五、详细方案」中对应行的「描述」列
+对照 PRD「六、详细方案」中对应行的「描述」列
     ↓
 发现不一致？
     ├─ 原型错误 → 修改原型 HTML
@@ -600,9 +905,9 @@ Pencil 设计稿完成后，**必须反向校准 HTML 原型**使两端视觉一
 
 ---
 
-## 步骤四：产出流程图（可裁剪）
+## 步骤四：产出流程图与交互流程图（均可裁剪）+ 时序图章节规范
 
-> **前置判断：** 本步骤对应 PRD 的「四、流程图」章节，属于按需裁剪项（见 2.2 / 1.3.1）。若在章节裁剪预告中已与用户确认**省略流程图**（无多步骤流程/无分支的小需求），则**整步跳过**，不产出 `[需求名]/流程图/` 文件，PRD 中也不嵌入流程图 iframe。仅当保留该章节时才执行下面的规范。
+> **前置判断：** 本步骤覆盖 PRD 三个按需裁剪章节（见 2.2 / 1.3.1）：「四、流程图」（Mermaid 文件，业务逻辑层，§4.1–4.5）、「五、交互流程图」（界面跳转链路层，独立 HTML，§4.6）与「九、时序图」（端侧编排层，研发/测试向，**PRD 内 Mermaid 源码文本章节**，§4.7）。三者各自独立裁剪：省略哪章就跳过对应小节；前两者都省略则不产出 `[需求名]/流程图/` 目录。以下规范仅对保留的章节执行。
 
 ### 4.1 规范
 
@@ -634,6 +939,117 @@ Pencil 设计稿完成后，**必须反向校准 HTML 原型**使两端视觉一
 </iframe>
 ```
 
+### 4.5 导出截图必走本地导出服务（必做 · 踩坑记录）
+
+> **背景（踩坑记录）：** 流程图常常比视口高很多。若导出按钮**直接在浏览器里用 `html-to-image`/`html2canvas` 截 `.chart-container`**，长图会被**截掉一半**（受浏览器画布尺寸/视口限制）。项目早已为此做了**本地导出服务**（`scripts/prototype_server.py`，Playwright 对每个 `.chart-container` 做**整元素截图**，不受视口高度限制），却容易在新生成流程图时漏接，退化成半张图。**故固化为必做项。**
+
+**① 每个流程图 HTML 必须接入导出服务客户端**（与原型导出同一套）：
+```html
+<button class="export-btn" onclick="exportChart()">📸 导出截图</button>
+<!-- 路径取决于嵌套层级：[需求名]/流程图/ 下为 ../../scripts/；旧扁平 流程图/ 下为 ../scripts/ -->
+<script src="../../scripts/prototype-export-client.js?v=YYYYMMDD-flow"></script>
+```
+- 客户端会在**捕获阶段**拦截 `.export-btn`/`.export-fab`/`#exportFab` 的点击，转而 POST `http://localhost:8765/api/screenshot`，由服务用 Playwright 截图，输出到 `[需求名]/流程图截图/`（旧扁平结构回退项目根 `流程图截图/`）。服务未启动时会自动尝试 launcher 唤起，仍失败则提示用户双击根目录「启动原型导出服务.command」。
+
+**② `onclick` 仅作降级兜底**：服务客户端加载时它不会触发（点击已被捕获）。兜底实现必须**服务优先 + 整图**：先 `window.exportPrototypeViaServer(btn)`，失败再 `html-to-image`，且**必须按完整 scroll 尺寸截**，否则仍是半张：
+```js
+async function exportChart(){
+  const btn=document.querySelector('.export-btn'), t=btn.textContent, bg=btn.style.background;
+  btn.textContent='⏳ 导出中...'; btn.disabled=true;
+  if(window.exportPrototypeViaServer){ try{ await window.exportPrototypeViaServer(btn); return; }catch(e){ console.warn('服务导出失败，降级',e); } }
+  try{
+    const {toBlob}=await import('https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/+esm');
+    const node=document.querySelector('.chart-container'), s=2;
+    const blob=await toBlob(node,{cacheBust:true,backgroundColor:'#ffffff',pixelRatio:s,
+      width:node.scrollWidth,height:node.scrollHeight,canvasWidth:node.scrollWidth*s,canvasHeight:node.scrollHeight*s,style:{transform:'none'}});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='[需求名]-流程图.png'; a.click(); URL.revokeObjectURL(a.href);
+    btn.textContent='✅ 已导出';
+  }catch(e){ console.error(e); btn.textContent='❌ 失败'; btn.style.background='#ef4444'; }
+  setTimeout(()=>{ btn.textContent=t; btn.style.background=bg; btn.disabled=false; },2200);
+}
+```
+**③ 自检：** 流程图产出后，按「四、原型一致性自查」同理确认导出按钮已 `include` 客户端脚本、路径层级正确（嵌套 `../../`）、点击能走服务出全图——**不允许只留裸 `html-to-image` 按钮**。
+
+### 4.6 交互流程图（Screen Flow · 界面跳转链路整图，可裁剪）
+
+> **前置判断：** 对应 PRD「五、交互流程图」章节，按需裁剪（见 2.2 / 1.3.1）。核心界面 ≤2 个、或页面间无跳转链路且无状态流转 → 整节跳过。
+>
+> **定位：** 与 §4.1 的 Mermaid 流程图**并存、各管一层**——Mermaid 管业务/时序/状态逻辑，交互流程图管「界面长什么样、从哪跳到哪」。目标是：**所有核心界面的缩略图拼成一整张图，界面之间用带触发标签的箭头连线标注跳转关系**，评审者不读正文也能看懂整条产品链路。
+
+**① 文件与嵌入：**
+- 保存路径：`[需求名]/流程图/[需求名]-screenflow.html`
+- PRD「五、交互流程图」章节以 iframe 嵌入（同 §4.4 方式，高度按画布实际高度给足），一整张图即可，不拆多图
+- **章节内只放 iframe，不加说明段落**：图本身自解释（箭头标签+状态机图例），导出入口等说明在 screenflow 页头自带，PRD 里不重复写"这是什么图/怎么导出"之类的引导文字
+- **必须带缩放控件（放大/缩小/适配）**：右上角 `position:fixed` 一组 `📸 下载图片 / ＋ / 百分比 / － / 适配` 按钮 + 按住画布拖拽平移（节点 iframe 已 `pointer-events:none`，整个画布可抓取）。**嵌入 PRD（`self!==top`）默认"适配宽度"**，未手动缩放时窗口 resize 自动重新适配（如 PRD 开关双栏）；**独立打开默认 100%**——导出服务是独立加载页面，必须保证无缩放变换、按原尺寸截图
+- **「📸 下载图片」按钮放在缩放控件组里（而非只放页头）**：页头在嵌入模式下隐藏，控件组常驻——PRD 内嵌预览里也能直接下载整张 PNG。按钮保留 `class="export-btn"` 以被导出服务客户端捕获拦截（同 §4.5，服务优先、html-to-image 兜底按原始尺寸截）
+- **画布底部留白**：最外侧底部轨道的标签之下再留 ≥30px，防止贴边被 iframe/截图裁切；顶部轨道同理
+- **界面节点直接用缩放 iframe 引真实原型 hash 页**（`../原型/[需求名]-prototype.html#page-id`，同级相对路径），原型改动自动同步到交互流程图，**禁止用截图 `<img>` 拼贴**（会随原型迭代失真）
+
+**② HTML 结构：**
+- 唯一画布 `<div class="chart-container screenflow-canvas">`（`position:relative`，白底，宽度按布局撑开）——**必须带 `chart-container` 类**，本地导出服务（§4.5）按该类做整元素截图，长图/宽图不裁切
+- 界面节点 `.flow-node`：内含 `.node-frame`（缩放 iframe，复用 §3.3 的 `data-pw`/`data-ph` + JS 显式设宽高与 `transform:scale()` 方案，禁 CSS 变量 calc）+ `.node-label`（节点下方界面名）+ 可选 `.node-badge`（状态标记，如「首次使用」「上传成功」）
+- 布局：主链路从左到右一行排开，分支/状态变体（如 非首次使用）另起一行放在对应节点下方——与示意图的排布方式一致
+- 连线层 `<svg class="screenflow-svg">`：`position:absolute` 铺满画布、`pointer-events:none`，置于节点之上
+
+**③ 箭头绘制（关键实现约束）：**
+- **禁止手写死坐标画线。** 连线关系用数据驱动，JS 动态计算：
+
+```js
+// 每条边：from/to = 节点 id；label = 触发动作/条件；fromSide/toSide = 锚点方位
+// bend = 同侧轨道外扩距离（多条同侧边用不同 bend 错峰）；fromOffset/toOffset = 锚点沿边平移，防同点多线重叠
+// labelT = 标签在折线总长上的比例位置（默认取最长一段的中点）
+const EDGES = [
+  { from:'node-entry',  to:'node-scan',   label:'点击 拍照分析试卷', fromSide:'right', toSide:'left' },
+  { from:'node-entry',  to:'node-history',label:'非首次使用',        fromSide:'bottom', toSide:'top'  },
+  { from:'node-report', to:'node-entry',  label:'点「返回」',        fromSide:'top', toSide:'top', bend:130, toOffset:-25 },
+];
+```
+- **连线必须是直角折线（Manhattan 路由），禁止贝塞尔曲线/斜线**（踩坑记录：曲线在长回环、多分支时相互交叉压节点，评审看不清）。逐段只能水平或垂直，按出/入方位路由：
+  - 横出横入（right→left 等）：同 y 直连；不同 y 走中线 Z 形（`midX = (x1+x2)/2` 处两个直角）
+  - 横出竖入 / 竖出横入：一个直角拐点（`(x2,y1)` / `(x1,y2)`）
+  - 竖出竖入对穿（bottom→top）：同 x 直连；不同 x 走中线 Z 形
+  - **同侧对（top→top / bottom→bottom，典型是"返回/重答"长回环）：走"轨道"** —— `rail = 端点外侧 bend px` 的水平横杆，多条同侧边用不同 `bend` 错峰，互不交叉且不越出画布
+- JS 在 load 后读节点 `getBoundingClientRect()`（相对画布、除以当前缩放系数）取锚点 → 生成途经点数组 → 拼 `M/L` 折线 path + `marker-end` 三角箭头；`resize` 与 iframe load 后 `setTimeout` 兜底重算
+- 标签放**最长一段的中点**（白底 `<rect>`+`<text>`，避免压线；密集处用 `labelT` 挪位）；分支从同一节点引出多条边，每条各带条件标签
+- 节点/边一旦增删，只改 DOM 节点与 `EDGES` 数组，连线自动重算——不存在改布局后箭头错位的问题
+- 参考实现：`AI口述题/流程图/AI口述题-screenflow.html`（已无头实测：17 边全为水平/垂直段、0 越界、0 交叉压节点）
+
+**④ 状态机说明（必做）：**
+- **同一界面的不同状态拆成独立节点**（如「试卷分析·首次使用」vs「试卷分析·非首次使用」、「确认上传」vs「上传成功」），节点标签注明状态，不允许一个节点糊多个状态
+- 边上的 label 写「触发动作＋条件」（如「点击确认上传」「上传成功后自动」「额度=0 时」），条件分支必须每条边都有标签
+- 画布角落放一个「状态机图例」块（`.state-legend`）：列出关键对象的完整状态流转链（如 `分析任务：待上传 → 上传中 → 等待分析 → 已完成/失败`），状态名称、颜色与 PRD 状态定义及原型状态标签一致
+
+**⑤ 内容禁令：** 节点标签、箭头标签、状态图例全部用产品语言，**不出现任何技术接口表述**（同 §2.3.1 ③）。
+
+**⑥ 导出与自检：**
+- 按 §4.5 同一套规范接入本地导出服务：`<script src="../../scripts/prototype-export-client.js?v=YYYYMMDD-screenflow"></script>` + `.export-btn` 按钮，Playwright 对 `.chart-container`（即整张画布）整元素截图 → `[需求名]/流程图截图/`；**不允许裸 `html-to-image`**，降级兜底同 §4.5 ②
+- 产出后自检：a) 节点覆盖 PRD 详细方案中的全部核心界面及其状态变体；b) 每条箭头与描述列【交互说明】的「操作 → 结果」逐条对应，无缺边、无多边；c) 状态机图例与 PRD 状态定义一致；d) 导出按钮走服务出整图
+
+### 4.7 时序图（研发/测试向 · PRD 内文本章节 · 可裁剪）
+
+> **前置判断：** 对应 PRD「九、时序图」章节（**位于「数据埋点」之后、上线计划/附录之前，即正文最后**），按需裁剪（见 2.2 / 1.3.1）。**受众是研发与测试**——研发照文本写逻辑、测试照文本写用例。无复杂端侧编排的简单需求（无语音/流式/多端协同/复杂动效状态机）→ 整章跳过。
+
+**① 形态（极度重要）：Mermaid 源码文本，不渲染成图**
+- 本章内容是**可复制的 Mermaid 源码文本块**（`<pre class="seq-code">` 等宽深色代码块），**不做 Mermaid 渲染、不出图片、不用 iframe**——渲染图研发/测试不好复用；源码文本可直接读、可整段复制到任意支持 Mermaid 的工具二次使用（踩坑记录：首版做成渲染图被打回）
+- 每个代码块右上角一个「📋 复制源码」按钮（`navigator.clipboard` 优先、选区 `execCommand` 兜底）
+- `<pre>` 不在 §2.7 编辑模块的可编辑选择器内，源码不会被误编辑，符合预期
+
+**② 固定格式（两图为基本盘，可按需增减）：**
+- 章首一句话说明本节构成与用途（1 张端侧总时序 + N 张关键对象状态图，给研发/测试直接复制使用）
+- **图 1 · 端侧互动编排总时序**：`sequenceDiagram`，泳道按当前需求实际参与方设置（如 用户 / 端 / Cocos / 服务端），覆盖从进入页面到最终产物的完整编排：初始化、资源播放顺序、录音/输入开关时机、请求与返回、alt/loop 分支、收尾跳转
+- **图 2 · 关键对象状态图**：`stateDiagram-v2`，对核心展示对象（如角色动效、任务状态）画完整状态流转
+- 每个代码块下方附「**说明**」要点列表：列出图内不展开的约定（如末帧延续、重试进入顺序）与未纳入项
+
+**③ 书写规范：**
+- **动作名/资源名直接复用真实资源目录名**，不做二次命名（如 `出现-打招呼-介绍`、`倾听循环`）
+- 关键时序约束用 `Note` 标注（如「control 先返回也要等 done 且播报完成后再提交新 control 推进状态」这类门控规则）
+- 全局异常处理用图末 `Note over` 统一标注（网络异常重试、无识别文本补录等），口径与详细方案【边界说明】一致
+- **技术字段豁免**：本章允许出现接口/字段/事件名（如 `voicechat/stream`、`nextStage`、`audio_chunk`）——§2.3.1 的"禁技术接口表述"只约束详细方案描述列，时序图本就是给研发/测试看的
+- 源码虽不在 PRD 内渲染，交付前仍须在支持 Mermaid 的环境验证一遍**无 Syntax error**（语法注意事项同 §4.3），保证研发复制即可用
+- 参考实现：`AI口述题/需求文档/AI口述题-PRD.html` 的「八、时序图」章节
+
+**④ 一致性自检：** 时序图的分支与推进条件必须与详细方案【功能逻辑】【边界说明】口径一致（异常处理、重试规则、次数限制等）——两处冲突时**先对齐再交付**。
+
 ---
 
 ## 步骤五：交付与评审
@@ -645,6 +1061,8 @@ Pencil 设计稿完成后，**必须反向校准 HTML 原型**使两端视觉一
 | **PRD文档** | HTML (.html) | 浏览器打开，直接截图到钉钉；或复制页面内容粘贴 |
 | **原型** | HTML (.html) | 已内嵌在PRD的iframe中；也可单独提供文件 |
 | **流程图** | HTML (.html) | 已内嵌在PRD的iframe中；也可单独提供文件 |
+| **时序图** | PRD 内文本章节 | Mermaid 源码代码块 + 一键复制按钮（「九、时序图」，正文最后）；研发/测试直接复制源码使用，不渲染成图 |
+| **交互流程图** | HTML (.html) | 已内嵌在PRD「五、交互流程图」章节iframe中；可经本地导出服务导出整张PNG |
 
 > **交付到钉钉的方式：**
 > 在浏览器中打开 PRD HTML 文件，对需要的部分用截图工具（Mac: `Cmd+Ctrl+Shift+4`）截图，然后直接 `Cmd+V` 粘贴到钉钉文档。
@@ -655,9 +1073,12 @@ Pencil 设计稿完成后，**必须反向校准 HTML 原型**使两端视觉一
 - [ ] ★ 保留的章节按 2.2 顺序自上而下排列，编号连续无跳号
 - [ ] ★ 本次省略的章节已在需求确认阶段告知用户并获认可（1.3.1）
 - [ ] ★ 详细方案表格为四列格式，rowspan合并一级模块
+- [ ] ★ 描述列按 §2.3.1 分块结构组织：【页面元素】【交互说明】必出、按需块不硬凑，且全文**无任何技术接口表述**
 - [ ] ★ 每个功能行对应的原型列已嵌入iframe（无双边框白边）
 - [ ] ★ 原型中所有文案/数据/状态 与 PRD「详细方案」描述列完全一致（已通过 3.6 自查）
 - [ ] （若保留流程图）流程图正常渲染（无Syntax error）；若省略则确认未残留空的流程图 iframe
+- [ ] （若保留时序图）为**源码文本块**（非渲染图）且复制按钮可用、源码经 Mermaid 环境验证无 Syntax error、分支与推进条件与详细方案【功能逻辑】/【边界说明】口径一致、技术字段仅出现在本章（§4.7 自检）
+- [ ] （若保留交互流程图）节点覆盖全部核心界面与状态变体、箭头标签与描述列【交互说明】逐条对应、状态机图例齐全、导出走本地服务（§4.6 自检）
 - [ ] （若保留异常与边界）异常场景全部覆盖（不清晰/非题目/无结果/网络异常/超时）
 - [ ] （若保留数据埋点）埋点参数完整
 - [ ] （若保留上线计划）排期/灰度策略已写明
@@ -677,18 +1098,20 @@ Pencil 设计稿完成后，**必须反向校准 HTML 原型**使两端视觉一
 | 3 | 二、需求目标 | 是否影响量化指标或目标项 |
 | 4 | **三、需求概述 · 功能清单表** | 新增模块**必须加行**；功能调整必须改描述 |
 | 5 | 四、流程图 | 新增流程节点、分支、状态流转 |
-| 6 | 五、详细方案（用户端 / 管理端 / 其他端，按当前需求实际存在的端组织） | 功能落地描述；不存在的端不要硬写 |
-| 7 | 端侧联动与权限边界 | 若涉及多端、后台、运营台或审核台，检查是否需要同步 |
-| 8 | 六、异常与边界处理 | 是否引入新异常场景 |
-| 9 | 七、数据埋点 | 是否需要新埋点事件 |
-| 10 | 八、上线计划 | 是否影响排期或灰度策略 |
-| 11 | 附录 · 决策对齐表 | 是否新增决策项 |
-| 12 | 附录 · 产品风格定位 | 是否影响文案风格 |
-| 13 | 原型文件（.html） | 新增页面 + 更新 `pages` 数组 + **逐页检查文案/数据/状态是否与 PRD 描述一致（参照 3.6 节）** |
-| 14 | PRD 双栏预览下拉项 | 新增页的 option |
-| 15 | PRD 的页面映射（如 `pageAliases`、端侧页面集合、预览状态） | 新增页或删除端侧时需同步 |
+| 6 | 五、交互流程图（screenflow.html） | 新增/删除界面或状态变体 → 补/删 `.flow-node` 节点与 `EDGES` 边；跳转关系变化 → 改箭头与触发标签；状态定义变化 → 同步状态机图例（见 §4.6） |
+| 7 | 六、详细方案（用户端 / 管理端 / 其他端，按当前需求实际存在的端组织） | 功能落地描述；不存在的端不要硬写；描述列保持 §2.3.1 分块结构 |
+| 8 | 端侧联动与权限边界 | 若涉及多端、后台、运营台或审核台，检查是否需要同步 |
+| 9 | 七、异常与边界处理 | 是否引入新异常场景（与描述列【边界说明】及时序图异常 Note 互相印证） |
+| 10 | 八、数据埋点 | 是否需要新埋点事件 |
+| 11 | 九、时序图（PRD 内源码文本块） | 编排顺序/分支/推进条件/异常口径变化 → 同步总时序源码；新增关键对象或状态 → 补状态图源码（见 §4.7） |
+| 12 | 十、上线计划 | 是否影响排期或灰度策略 |
+| 13 | 附录 · 决策对齐表 | 是否新增决策项 |
+| 14 | 附录 · 产品风格定位 | 是否影响文案风格 |
+| 15 | 原型文件（.html） | 新增页面 + 更新 `pages` 数组 + **逐页检查文案/数据/状态是否与 PRD 描述一致（参照 3.6 节）** |
+| 16 | PRD 双栏预览下拉项 + 滚动联动 | 新增页的 `CATALOG` 项 / `#pageSelect` option，并给对应「一级模块」单元格补 `data-preview=<value>`（见 2.6 ⑧ scroll-spy） |
+| 17 | PRD 的页面映射（如 `pageAliases`、端侧页面集合、预览状态） | 新增页或删除端侧时需同步 |
 
-> **裁剪章节的处理：** 上表第 4/5/8/9/10/11/12 项对应的章节可能在初稿时已按 2.2 裁掉。遍历到这些位置时：
+> **裁剪章节的处理：** 上表第 4/5/6/9/10/11/12/13/14 项对应的章节可能在初稿时已按 2.2 裁掉。遍历到这些位置时：
 > - 该章节**当前存在** → 按上表正常同步。
 > - 该章节**当前不存在，但本次变更触及了它**（如小需求升级后新增了流程分支、引入了新异常或新埋点）→ **需补回该章节**：先按 1.3.1 的方式告知用户"本次需补回 X 章节，原因…"，确认后补写，并按 2.2 顺序插回正确位置、重排编号。
 > - 该章节不存在且本次也不触及 → 跳过。
@@ -815,7 +1238,8 @@ PM工作流/
 │   │   ├── [需求名]-prototype.html # HTML 交互原型（主交付物，始终产出）
 │   │   └── [需求名].pen            # Pencil 设计源文件（可选，高保真模式）
 │   ├── 流程图/
-│   │   └── [需求名]-flow.html
+│   │   ├── [需求名]-flow.html        # Mermaid 业务流程图（按需；时序图为 PRD 内文本章节，不落此处）
+│   │   └── [需求名]-screenflow.html  # 交互流程图·界面跳转链路整图（按需，见 §4.6）
 │   ├── 原型截图/                    # 该需求导出的原型截图
 │   │   └── [页面名].png            # HTML 导出或 Pencil 导出的 PNG
 │   ├── 验收清单/                    # 用到时才建（见 edu-pm-acceptance）
