@@ -6,13 +6,16 @@
   1. 在 http://localhost:8765 提供项目文件预览
   2. 提供 /api/screenshot 接口，供 HTML 里的导出按钮触发
   3. 提供 /api/save-html 接口，供 PRD HTML 将浏览器内编辑内容写回本地文件
-  4. 使用 Playwright/Chromium 截取浏览器真实渲染后的 .device，避免 html-to-image 重绘差异
+  4. 提供 /api/snapshot 接口，按单个原型页返回 base64 PNG，供 PRD「一键复制全文」把
+     iframe 换成图片（缓存优先：截图较原型 HTML 新则直接复用，否则实时重渲这一页）
+  5. 使用 Playwright/Chromium 截取浏览器真实渲染后的 .device，避免 html-to-image 重绘差异
 
 使用方法：双击项目根目录的「启动原型导出服务.command」，或执行：
   python3 scripts/prototype_server.py
 """
 
 import asyncio
+import base64
 import json
 import os
 import re
@@ -34,6 +37,20 @@ PROJECT_DIR = Path(__file__).resolve().parent.parent
 SERVER_URL = f"http://localhost:{PORT}"
 DEFAULT_VIEWPORT = {"width": 1440, "height": 900}
 EXPORT_DEVICE_SCALE = 2
+
+# 截图目录下的页面清单文件名（点号开头，不污染 PM 看到的截图目录）。
+# 记录 page_id → 文件名 的映射，供 /api/snapshot 用 hash 定位 PNG。
+MANIFEST_NAME = ".export-manifest.json"
+# /api/asset 放行的图片类型（详细方案「原型」列的截图版 <img> 要内联成 base64 才能粘出去）
+ASSET_MIME = {
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".gif": "image/gif",
+    ".webp": "image/webp",
+    ".svg": "image/svg+xml",
+}
+ASSET_MAX_BYTES = 12 * 1024 * 1024
 
 # 允许浏览器内编辑写回的产物子目录名（任意需求目录下的这些子目录，或项目根下的同名旧目录）
 WRITABLE_SUBDIR_NAMES = {"原型", "流程图", "需求文档", "需求挖掘", "验收清单", "数据分析"}
@@ -86,6 +103,10 @@ _state = {
     "files": [],
 }
 _state_lock = threading.Lock()
+
+# /api/snapshot 用独立锁串行化单页重渲，不占用 /api/screenshot 的 _state 状态机，
+# 避免「一键复制全文」把「一键导出所有截图」的进度条搅乱。
+_snapshot_lock = threading.Lock()
 
 
 def _update_state(**kwargs):
@@ -153,6 +174,198 @@ def _resolve_html_path(raw_path):
             return resolved
 
     raise FileNotFoundError(f"找不到原型 HTML：{raw_path or '(empty)'}")
+
+
+def _split_ref(raw):
+    """把 `../流程图/x.html?only=a#p1` 拆成 (路径, query, page_id)。
+
+    query 必须留着：PRD 里的流程图 iframe 常带 `?only=flow-main` 决定渲染哪一张，
+    丢掉它取出来的图就和 PRD 里看到的不是同一张。
+    """
+    raw = raw or ""
+    if raw.startswith(("http://", "https://", "file://")):
+        parsed = urlparse(raw)
+        return unquote(parsed.path), parsed.query, unquote(parsed.fragment)
+    path_part, _, hash_part = raw.partition("#")
+    path_only, _, query = path_part.partition("?")
+    return unquote(path_only), query, unquote(hash_part)
+
+
+def _split_hash(raw):
+    path_part, _query, hash_part = _split_ref(raw)
+    return path_part, hash_part
+
+
+def _pick_existing_html(candidates):
+    for candidate in candidates:
+        try:
+            resolved = candidate.resolve()
+        except OSError:
+            continue
+        if (
+            resolved.exists()
+            and resolved.is_file()
+            and resolved.suffix.lower() == ".html"
+            and _is_under(resolved, PROJECT_DIR)
+        ):
+            return resolved
+    return None
+
+
+def _resolve_base_html(base):
+    """解析发起页（PRD）的路径，用来给相对 src 定位。找不到就返回 None，不兜底。
+
+    两种 base 都要认：file:// 打开时 location.pathname 是磁盘绝对路径；PRD 被推到内网、
+    用 http:// 打开时它是站点根下的路径（/需求名/需求文档/x.html），在磁盘上并不存在，
+    必须再按项目目录相对解一次，否则内网访客点「一键复制全文」全程取不到原型图。
+    """
+    base_path, _ = _split_hash(base)
+    if not base_path:
+        return None
+    incoming = Path(base_path)
+    candidates = [incoming] if incoming.is_absolute() else []
+    candidates.append(PROJECT_DIR / base_path.lstrip("/"))
+    return _pick_existing_html(candidates)
+
+
+def _resolve_ref_html(src, base=None):
+    """解析 PRD 里 iframe 的 src。
+
+    与 _resolve_html_path 的区别：支持 `../原型/x.html#p1` 这类相对发起页的路径，
+    且**不做**「找不到就退回第一个原型」的兜底——取错页比取不到更糟。
+    返回 (绝对 HTML 路径, page_id, query)。
+    """
+    src_path, query, page_id = _split_ref(src)
+    if not src_path:
+        raise FileNotFoundError("iframe src 为空")
+
+    candidates = []
+    incoming = Path(src_path)
+    if incoming.is_absolute():
+        candidates.append(incoming)
+    else:
+        base_html = _resolve_base_html(base)
+        if base_html:
+            candidates.append(base_html.parent / src_path)
+    # http:// 打开时 src 可能是站点根路径，磁盘上不存在，按项目目录再解一次
+    candidates.append(PROJECT_DIR / src_path.lstrip("/"))
+
+    resolved = _pick_existing_html(candidates)
+    if not resolved:
+        raise FileNotFoundError(f"找不到原型 HTML：{src}")
+    return resolved, page_id, query
+
+
+def _resolve_ref_asset(src, base=None):
+    """解析 PRD 里 <img> 的本地 src（详细方案「原型」列的截图版）。
+
+    与 _resolve_ref_html 同样的相对路径规则，但只放行图片后缀，且必须落在项目目录内
+    ——这个接口会把文件原样 base64 吐出去，不能变成任意文件读取。
+    """
+    src_path, _query, _hash = _split_ref(src)
+    if not src_path:
+        raise FileNotFoundError("img src 为空")
+
+    suffix = Path(src_path).suffix.lower()
+    if suffix not in ASSET_MIME:
+        raise ValueError(f"不支持的图片类型：{suffix or src_path}")
+
+    candidates = []
+    incoming = Path(src_path)
+    if incoming.is_absolute():
+        candidates.append(incoming)     # file:// 下就是磁盘绝对路径
+    else:
+        base_html = _resolve_base_html(base)
+        if base_html:
+            candidates.append(base_html.parent / src_path)
+    # http:// 打开时 src 可能是站点根路径，磁盘上不存在，按项目目录再解一次
+    candidates.append(PROJECT_DIR / src_path.lstrip("/"))
+
+    for candidate in candidates:
+        try:
+            resolved = candidate.resolve()
+        except OSError:
+            continue
+        if resolved.is_file() and _is_under(resolved, PROJECT_DIR):
+            return resolved, ASSET_MIME[suffix]
+    raise FileNotFoundError(f"找不到图片：{src}")
+
+
+def _manifest_path(html_path):
+    return _output_root_for(html_path) / MANIFEST_NAME
+
+
+def _manifest_key(html_path):
+    try:
+        return html_path.resolve().relative_to(PROJECT_DIR.resolve()).as_posix()
+    except ValueError:
+        return html_path.name
+
+
+def _read_manifest(html_path):
+    """读出该 HTML 在截图目录清单里的条目：{page_id/tab → 文件名}。
+
+    清单按 HTML 相对路径分组，因为同一个 流程图截图/ 目录可能被多份流程图共用。
+    """
+    path = _manifest_path(html_path)
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    entry = data.get(_manifest_key(html_path))
+    return entry if isinstance(entry, dict) else {}
+
+
+def _write_manifest(html_path, items):
+    """把本轮页面清单写回截图目录（合并式，不动其他 HTML 的条目）。"""
+    path = _manifest_path(html_path)
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(data, dict):
+            data = {}
+    except (OSError, ValueError):
+        data = {}
+
+    data[_manifest_key(html_path)] = {
+        "generated_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+        "items": items,
+    }
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        _atomic_write_text(path, json.dumps(data, ensure_ascii=False, indent=2))
+    except OSError as error:
+        print(f"  ⚠ 页面清单写入失败：{error}")
+
+
+def _lookup_cached_png(html_path, page_id):
+    """缓存优先：清单里有该页、PNG 还在、且比原型 HTML 新 → 直接复用。"""
+    items = _read_manifest(html_path).get("items") or []
+    if not items:
+        return None
+
+    match = None
+    for item in items:
+        if page_id and item.get("page_id") == page_id:
+            match = item
+            break
+    if match is None:
+        if page_id:
+            return None
+        # 无 hash 无 query → 取整轮导出的第一页；跳过 `q:` 开头的 query 专属条目
+        plain = [it for it in items if not str(it.get("page_id") or "").startswith("q:")]
+        if not plain:
+            return None
+        match = plain[0]
+
+    png_path = _output_root_for(html_path) / (match.get("file") or "")
+    try:
+        if not png_path.is_file():
+            return None
+        if png_path.stat().st_mtime < html_path.stat().st_mtime:
+            return None  # 原型改过了，缓存已过期
+    except OSError:
+        return None
+    return png_path
 
 
 def _resolve_writable_html_path(raw_path):
@@ -453,16 +666,30 @@ async def _run_screenshots(html_path, options=None):
     output_dir = _output_root_for(html_path)
     source_labels = _extract_source_labels(html_path)
     files = []
+    manifest_items = []
     success = 0
 
     _update_state(output_dir=str(output_dir), html=str(html_path), files=[])
 
     try:
         output_dir.mkdir(parents=True, exist_ok=True)
-        # 只清理本 HTML 上一轮的 PNG：流程图按 "{feature}-图*"，原型整目录归该需求所有。
-        cleanup_glob = f"{_feature_name(html_path)}-图*.png" if _is_flow_html(html_path) else "*.png"
-        for old_png in output_dir.glob(cleanup_glob):
-            old_png.unlink()
+        # 只清理"本 HTML 上一轮确实生成过"的 PNG，清单说了算。
+        #
+        # 曾经这里对原型用的是 `*.png`（"原型整目录归该需求所有"），实测把 PM 手工做的
+        # 8 张截图整目录删干净了：那些图由 [需求名]-shots.html 按 hash 逐个状态手工截、
+        # 手工命名（01-章节详情页.png…），不在任何一轮导出产物里；而触发删除的
+        # [需求名]-prototype.html 本身没有 .device 节点，只出 1 张图 —— 删 8 补 1。
+        # 截图目录是 PM 的资产目录，不是本工具的临时目录，不允许按通配符清场。
+        old_files = {it.get("file") for it in (_read_manifest(html_path).get("items") or []) if it.get("file")}
+        if _is_flow_html(html_path):
+            # 流程图产物名是本工具独占的命名约定（"{feature}-图N.png"），按它清理不会碰到别人的图；
+            # 保留这一支，是为了清单还不存在的旧目录也能清掉上一轮残留。
+            old_files |= {p.name for p in output_dir.glob(f"{_feature_name(html_path)}-图*.png")}
+        for name in old_files:
+            old_png = output_dir / name
+            # 只删同目录下的直接子文件，防止清单被手改成 "../x.png" 这类路径
+            if old_png.parent == output_dir and old_png.is_file():
+                old_png.unlink()
 
         base_url = f"{SERVER_URL}{_relative_url_path(html_path)}"
 
@@ -485,6 +712,7 @@ async def _run_screenshots(html_path, options=None):
                     label = f"{_feature_name(html_path)}-图{index}"
                     filename = _dedupe_filename(f"{label}.png", used_names)
                     out_path = output_dir / filename
+                    manifest_items.append({"page_id": f"chart-{index}", "tab": None, "label": label, "file": filename})
                     _update_state(progress=index - 1, current=label)
                     try:
                         await handle.scroll_into_view_if_needed(timeout=3000)
@@ -506,6 +734,9 @@ async def _run_screenshots(html_path, options=None):
                     label = _safe_filename(item["label"], fallback=item["page_id"])
                     filename = _dedupe_filename(f"{label}.png", used_names)
                     out_path = output_dir / filename
+                    manifest_items.append({
+                        "page_id": item["page_id"], "tab": item.get("tab"), "label": label, "file": filename,
+                    })
                     _update_state(progress=index - 1, current=label)
 
                     try:
@@ -523,6 +754,9 @@ async def _run_screenshots(html_path, options=None):
                         print(f"  ⚠ [{label}] {error}")
 
             await browser.close()
+
+        # 写页面清单：供 /api/snapshot 用 hash 直接定位 PNG（缓存优先）
+        _write_manifest(html_path, manifest_items)
 
         _update_state(
             running=False,
@@ -544,6 +778,166 @@ def _screenshot_thread(html_path, options=None):
     asyncio.set_event_loop(loop)
     loop.run_until_complete(_run_screenshots(html_path, options=options))
     loop.close()
+
+
+def _snapshot_cache_key(page_id, query):
+    """带 query 的 iframe（如 `?only=flow-main`）自成一档缓存，不与整轮导出的页混用。"""
+    if query:
+        return f"q:{query}" + (f"#{page_id}" if page_id else "")
+    return page_id or ""
+
+
+async def _pick_snapshot_element(page, page_id):
+    """兜底取图：优先指定 id，其次页面里最像"一屏内容"的容器，最后整个 body。
+
+    PRD 里的 iframe 并不都是平铺原型——单屏页（.screen）、流程图（.chart-container）、
+    甚至纯排版页都有，所以不能假设一定存在 .device[id]。
+    """
+    handle = await page.evaluate_handle(
+        """
+        id => {
+          if (id) {
+            const byId = document.getElementById(id);
+            if (byId) return byId;
+          }
+          return document.querySelector('.chart-container, .device, .screen, .phone, main') || document.body;
+        }
+        """,
+        page_id,
+    )
+    element = handle.as_element()
+    if not element:
+        raise RuntimeError("页面里找不到可截图的节点")
+    return element
+
+
+async def _run_single_snapshot(html_path, page_id, query, scale):
+    """只渲染一页并落盘，返回 (PNG 路径, 页面清单, 命中项索引)。
+
+    命名分三档：
+      A. 平铺原型的 .device[id] / B. 流程图的 .chart-container
+         → 沿用整轮导出的命名与去重顺序，单页重渲的产物能被整轮导出与缓存查找认得。
+      C. 其余（单屏页、带 query 的流程图片段等）
+         → 用 `HTML 名[-page_id]` 独立命名，不与 A/B 抢文件名。
+    """
+    from playwright.async_api import async_playwright
+
+    output_dir = _output_root_for(html_path)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    url = f"{SERVER_URL}{_relative_url_path(html_path)}"
+    if query:
+        url += "?" + query
+    if page_id:
+        url += "#" + quote(page_id, safe="")
+
+    cache_key = _snapshot_cache_key(page_id, query)
+
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True)
+        context = await browser.new_context(
+            viewport=dict(DEFAULT_VIEWPORT),
+            device_scale_factor=scale,
+        )
+        page = await context.new_page()
+        try:
+            await page.goto(url, wait_until="networkidle", timeout=30000)
+            await _wait_for_export_ready(page)
+
+            items, target, element = None, 0, None
+
+            # ── A/B 档：无 query 时才走整轮导出同款命名（带 query 的片段是另一张图）──
+            if not query and _is_flow_html(html_path):
+                containers = await page.locator(".chart-container").element_handles()
+                if containers:
+                    used = set()
+                    items = [
+                        {
+                            "page_id": f"chart-{i}", "tab": None,
+                            "label": f"{_feature_name(html_path)}-图{i}",
+                            "file": _dedupe_filename(f"{_feature_name(html_path)}-图{i}.png", used),
+                        }
+                        for i in range(1, len(containers) + 1)
+                    ]
+                    matched = [i for i, it in enumerate(items) if it["page_id"] == page_id]
+                    if page_id and not matched:
+                        items = None  # 给的不是 chart-N，落到 C 档按 id 取元素
+                    else:
+                        target = matched[0] if matched else 0
+                        element = containers[target]
+
+            if items is None and not query and not _is_flow_html(html_path):
+                try:
+                    pages = await _discover_pages(page, html_path, _extract_source_labels(html_path))
+                except Exception:
+                    pages = []  # 单屏页没有 .device[id]，交给下面的 C 档兜底
+                if pages:
+                    used = set()
+                    candidates = []
+                    for item in pages:
+                        label = _safe_filename(item["label"], fallback=item["page_id"])
+                        candidates.append({
+                            "page_id": item["page_id"], "tab": item.get("tab"), "label": label,
+                            "file": _dedupe_filename(f"{label}.png", used),
+                        })
+                    matched = [i for i, it in enumerate(candidates) if it["page_id"] == page_id]
+                    if not page_id or matched:
+                        items, target = candidates, (matched[0] if matched else 0)
+                        await _force_tiled_mode(page)
+                        await _set_tab(page, items[target].get("tab"))
+                        await _wait_for_export_ready(page)
+                        element = await _wait_for_visible_device(page, items[target]["page_id"])
+
+            # ── C 档兜底：单屏页 / 带 query 的片段 / 给了非页面 id ──
+            if element is None:
+                label = _safe_filename(html_path.stem, fallback="snapshot")
+                if page_id:
+                    label = f"{label}-{_safe_filename(page_id, fallback='page')}"
+                elif query:
+                    label = f"{label}-{_safe_filename(query, fallback='q')}"
+                items = [{"page_id": cache_key, "tab": None, "label": label, "file": f"{label}.png"}]
+                target = 0
+                element = await _pick_snapshot_element(page, page_id)
+
+            out_path = output_dir / items[target]["file"]
+            await element.scroll_into_view_if_needed(timeout=3000)
+            await page.wait_for_timeout(150)
+            await element.screenshot(path=str(out_path), type="png", scale="device")
+        finally:
+            await browser.close()
+
+    return out_path, items, target
+
+
+def _snapshot_png(html_path, page_id, query, scale):
+    """缓存优先 + 自动重渲，返回 (PNG 路径, 是否命中缓存)。"""
+    cache_key = _snapshot_cache_key(page_id, query)
+    cached = _lookup_cached_png(html_path, cache_key)
+    if cached:
+        return cached, True
+
+    # 渲染串行化：复制全文会并发请求多页，避免同时拉起多个 Chromium
+    with _snapshot_lock:
+        cached = _lookup_cached_png(html_path, cache_key)  # 等锁期间别的线程可能已经渲好
+        if cached:
+            return cached, True
+
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            out_path, items, _target = loop.run_until_complete(
+                _run_single_snapshot(html_path, page_id, query, scale)
+            )
+        finally:
+            asyncio.set_event_loop(None)
+            loop.close()
+
+        # 把本次发现的页面清单并进 manifest：A/B 档补齐整份映射，C 档只补自己这一条
+        existing = {it.get("page_id"): it for it in (_read_manifest(html_path).get("items") or [])}
+        for item in items:
+            existing[item.get("page_id")] = item
+        _write_manifest(html_path, list(existing.values()))
+
+    return out_path, False
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -580,6 +974,10 @@ class Handler(BaseHTTPRequestHandler):
         path = unquote(self.path.split("?", 1)[0])
         if path == "/api/screenshot":
             self._handle_screenshot()
+        elif path == "/api/snapshot":
+            self._handle_snapshot()
+        elif path == "/api/asset":
+            self._handle_asset()
         elif path == "/api/save-html":
             self._handle_save_html()
         else:
@@ -623,7 +1021,86 @@ class Handler(BaseHTTPRequestHandler):
 
         thread = threading.Thread(target=_screenshot_thread, args=(html_path, options), daemon=True)
         thread.start()
-        self._json({"started": True, "html": str(html_path), "output_dir": str(_output_root_for(html_path) / _feature_name(html_path))})
+        # 截图直接落在 [需求名]/原型截图|流程图截图/ 一级目录，不再按 HTML 名多封一层子文件夹；
+        # 这里曾多拼一个 _feature_name()，报出来的路径和真正的输出目录不一致，排障时很误导。
+        self._json({"started": True, "html": str(html_path), "output_dir": str(_output_root_for(html_path))})
+
+    def _handle_snapshot(self):
+        """按 iframe src 返回单页 base64 PNG，供 PRD「一键复制全文」把 iframe 换成图片。
+
+        file:// 下浏览器既不能 fetch 本地 PNG、canvas 也会被污染，所以 base64 只能由本服务下发。
+        """
+        try:
+            payload = self._read_json_body()
+            src = payload.get("src") or payload.get("url") or payload.get("path")
+            html_path, page_id, query = _resolve_ref_html(src, payload.get("base"))
+            try:
+                scale = int(payload.get("scale") or EXPORT_DEVICE_SCALE)
+            except (TypeError, ValueError):
+                scale = EXPORT_DEVICE_SCALE
+            scale = max(1, min(3, scale))
+        except Exception as error:
+            self._json({"ok": False, "error": str(error)}, 400)
+            return
+
+        try:
+            png_path, cached = _snapshot_png(html_path, page_id, query, scale)
+            raw = png_path.read_bytes()
+        except ImportError:
+            self._json({
+                "ok": False,
+                "error": "playwright 未安装，请先执行 pip3 install playwright && python3 -m playwright install chromium",
+            }, 500)
+            return
+        except Exception as error:
+            self._json({"ok": False, "error": str(error)}, 500)
+            return
+
+        self._json({
+            "ok": True,
+            "cached": cached,
+            "src": src,
+            "html": str(html_path),
+            "page_id": page_id,
+            "file": str(png_path),
+            "bytes": len(raw),
+            "dataUrl": "data:image/png;base64," + base64.b64encode(raw).decode("ascii"),
+        })
+
+    def _handle_asset(self):
+        """把 PRD 里本地路径的 <img>（原型列截图）读成 base64。
+
+        和 /api/snapshot 同一个理由：file:// 下 fetch 本地文件被拦、canvas 也读不回来，
+        不内联的话粘到钉钉/飞书里就是一堆裂图。
+        """
+        try:
+            payload = self._read_json_body()
+            src = payload.get("src") or payload.get("url") or payload.get("path")
+            asset_path, mime = _resolve_ref_asset(src, payload.get("base"))
+        except Exception as error:
+            self._json({"ok": False, "error": str(error)}, 400)
+            return
+
+        try:
+            size = asset_path.stat().st_size
+            if size > ASSET_MAX_BYTES:
+                self._json({
+                    "ok": False,
+                    "error": f"图片过大（{size // 1024} KB > {ASSET_MAX_BYTES // 1024} KB），已跳过内联",
+                }, 413)
+                return
+            raw = asset_path.read_bytes()
+        except Exception as error:
+            self._json({"ok": False, "error": str(error)}, 500)
+            return
+
+        self._json({
+            "ok": True,
+            "src": src,
+            "file": str(asset_path),
+            "bytes": len(raw),
+            "dataUrl": "data:" + mime + ";base64," + base64.b64encode(raw).decode("ascii"),
+        })
 
     def _handle_save_html(self):
         try:

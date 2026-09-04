@@ -225,6 +225,7 @@ description: 教育PM需求产出工作流 — 输入需求描述，产出PRD+�
   - `.sidebar-header`：`✕` 关闭按钮（`onclick="toggleDualPane()"`）+ 标题「交互原型预览」。
   - `.preview-context`：一行说明（如收口范围、或"完整交互依赖后端、静态预览仅还原界面"等真实约束，**不夸大成全功能可跑**）。
   - `.page-selector > select#pageSelect`（`onchange="switchPage(this.value)"`）。
+  - `.preview-zoom`：一行缩放控件 `－ / 百分比 / ＋ / 适配`（详见 ⑨）。
   - `.device-shell > .device-wrapper > iframe#prototypeFrame`。
   - `.prototype-resizer`：面板左缘竖向拖拽手柄。
 - `.fab-group`（`position:fixed; right:28px; bottom:28px`）：含「双栏预览」开关按钮（`dual-pane` 时 `display:none`）+「💾 保存并通知AI」按钮。**双栏打开时整组右移**到面板左侧：`body.dual-pane .fab-group { right: calc(var(--panel-w) + 28px); }`。（即 2.4 的保存按钮并入此 fab-group，不再单独悬浮。）
@@ -234,18 +235,23 @@ description: 教育PM需求产出工作流 — 输入需求描述，产出PRD+�
 - `body.dual-pane { margin:0!important; max-width:none!important; padding-right: calc(var(--panel-w) + 36px); }`（正文让出右侧面板宽度）
 - `body.dual-pane .prototype-sidebar { display:flex; }`（默认 `.prototype-sidebar{display:none}`）
 - `.device-wrapper iframe { transform-origin: top left; }`、`.device-shell { overflow:auto; }`（竖屏长页可滚）
+- **`.device-wrapper { flex: 0 0 auto; }`（极易漏，漏了缩放就是坏的）**：`.device-shell` 通常是 `display:flex` 居中，而 flex item 默认 `flex-shrink:1` —— JS 明明把 wrapper 设成 1170px，实际渲染仍被压回 480px，于是**放大后既不出滚动条、原型还被裁掉一半**。实测踩过：必须显式禁止收缩。放大后若还想从顶部开始看，配 `.device-shell { align-items:flex-start; }`。
 
 **③ JS 关键（内嵌 PRD 底部）：**
 ```js
 // 每项：{value,label,url,w,h}。url 指向可寻址原型；w/h = 该页逻辑尺寸
 const CATALOG = [ { value:'p1', label:'P1 · xxx', url:'../原型/xxx-prototype.html#p1', w:375, h:812 }, /* ... */ ];
 let previewPage = CATALOG[0].value;
+let previewZoom = null;   // null = 适配宽度；数字 = 手动缩放倍率（见 ⑨）
 function currentCfg(){ return CATALOG.find(o=>o.value===previewPage) || CATALOG[0]; }
 function scalePreview(){
   const shell=document.querySelector('.device-shell'), wrap=document.getElementById('deviceWrapper'), frame=document.getElementById('prototypeFrame');
-  const cfg=currentCfg(), innerW=Math.max(120, shell.clientWidth-40), scale=innerW/cfg.w;
+  const cfg=currentCfg(), innerW=Math.max(120, shell.clientWidth-40);
+  const fit=innerW/cfg.w, scale=(previewZoom==null)? fit : previewZoom;
   frame.style.width=cfg.w+'px'; frame.style.height=cfg.h+'px'; frame.style.transform='scale('+scale+')';
   wrap.style.width=Math.round(cfg.w*scale)+'px'; wrap.style.height=Math.round(cfg.h*scale)+'px';
+  const lab=document.getElementById('previewZoomLabel');
+  if(lab) lab.textContent=Math.round(scale*100)+'%'+(previewZoom==null?' · 适配':'');
 }
 function switchPage(v){ previewPage=v; const f=document.getElementById('prototypeFrame'); if(f) f.src=currentCfg().url; requestAnimationFrame(scalePreview); setTimeout(scalePreview,350); }
 function toggleDualPane(){ document.body.classList.toggle('dual-pane'); if(document.body.classList.contains('dual-pane')) requestAnimationFrame(scalePreview); }
@@ -288,6 +294,57 @@ function initPreviewScrollSync(){
   pickActive();
 }
 // 在 window load 里：renderSelect(); switchPage(previewPage); initPreviewScrollSync();
+```
+
+**⑨ 预览缩放（必做）：** 只有「适配宽度」不够用——横屏 `1280×720` 缩进 520px 面板后细节看不清，也没法放大局部看某个控件。故面板内固定提供一组缩放控件。
+
+- **控件形态沿用 §4.6 交互流程图那一组**（`－ / 百分比 / ＋ / 适配`），保持全 skill 一致；侧栏无下载需求，**去掉 §4.6 的 `📸`**。放在 `.page-selector` 与 `.device-shell` 之间，深色底细按钮，不与正文抢空间。
+- **档位固定梯**：`25 / 50 / 75 / 100 / 125 / 150 / 200 / 300`（%）。`＋/－` 在梯上跳一格，clamp 在 25%–300%。「适配」把 `previewZoom` 置回 `null` 回到自适应。
+- 从适配态第一次点 `＋/－` 时，以**当前适配倍率**为起点在梯上找下一格，不会突然跳到 100% 让画面猛跳。
+- **溢出由已有的 `.device-shell{overflow:auto}` 承接**，滚动条即可平移。**前提是 ② 里的 `.device-wrapper{flex:0 0 auto}` 别漏**，否则 wrapper 被 flex 压回面板宽度、放大等于白做。**不做 §4.6 那种按住拖拽平移**——侧栏里的是活原型，拖拽会和原型自身的点击/滑动交互打架。
+- **`Ctrl/⌘ + 滚轮`** 在 `.device-shell` 上缩放（`preventDefault`）。**如实记一条限制：指针悬在 iframe 内部时滚轮事件归 iframe 文档，父页收不到**，此时快捷键无效——所以**按钮是主路径、快捷键只是补充**，不要向用户宣传成"随处滚轮缩放"。
+- **切页保留缩放模式**：`switchPage()` 与 ⑧ 的 scroll-spy 自动切页都**不重置** `previewZoom`（适配继续适配，手动百分比保持不变），规则简单可预期。拖 `.prototype-resizer` 改 `--panel-w` 同理：适配模式重算、手动模式保持百分比。
+- **`previewZoom` 只存 JS 变量，不写进 DOM**（遵守 §2.7「不落 `data-*` 痕迹」的约定），保证 §2.4 保存与 §2.8 复制的产物干净。
+
+```css
+.preview-zoom { display:flex; align-items:center; gap:6px; padding:8px 16px; border-bottom:1px solid rgba(255,255,255,.08); }
+.preview-zoom button { background:rgba(255,255,255,.08); color:#e8e6ff; border:1px solid rgba(255,255,255,.16); border-radius:6px; padding:3px 10px; font-size:12px; cursor:pointer; line-height:1.6; }
+.preview-zoom button:hover { background:rgba(255,255,255,.18); }
+.preview-zoom #previewZoomLabel { min-width:82px; text-align:center; font-size:12px; color:#b9b5e0; font-variant-numeric:tabular-nums; }
+```
+
+```html
+<div class="preview-zoom">
+  <button type="button" onclick="zoomPreview(-1)" title="缩小">－</button>
+  <span id="previewZoomLabel">100%</span>
+  <button type="button" onclick="zoomPreview(1)" title="放大">＋</button>
+  <button type="button" onclick="fitPreview()" title="适配面板宽度">适配</button>
+</div>
+```
+
+```js
+const ZOOM_STEPS = [0.25,0.5,0.75,1,1.25,1.5,2,3];
+function currentPreviewScale(){
+  if(previewZoom!=null) return previewZoom;
+  const shell=document.querySelector('.device-shell');
+  if(!shell) return 1;
+  return Math.max(120, shell.clientWidth-40)/currentCfg().w;   // 当前适配倍率
+}
+function zoomPreview(dir){
+  const now=currentPreviewScale();
+  let next;
+  if(dir>0) next=ZOOM_STEPS.find(s=>s>now+1e-4);
+  else      next=[...ZOOM_STEPS].reverse().find(s=>s<now-1e-4);
+  previewZoom = next==null ? Math.min(3, Math.max(0.25, now)) : next;
+  scalePreview();
+}
+function fitPreview(){ previewZoom=null; scalePreview(); }
+// Ctrl/⌘ + 滚轮（限制：指针在 iframe 内时事件归 iframe，父页收不到）
+document.querySelector('.device-shell')?.addEventListener('wheel', function(e){
+  if(!e.ctrlKey && !e.metaKey) return;
+  e.preventDefault();
+  zoomPreview(e.deltaY < 0 ? 1 : -1);
+}, { passive:false });
 ```
 
 ### 2.7 全文档可编辑 · 表格行列拖拽 · 全表增删行（必做）
@@ -442,73 +499,228 @@ body.col-resizing { cursor:col-resize !important; } body.row-resizing { cursor:r
 - **迭代联动（接 §5.3）：** 新增表格/新增整块正文后，调用 `PMEdit.init(新节点)` 让控件对新节点幂等生效；`PMEdit.init`、`installTableControls`、`makeDocumentEditable` 均可重复安全调用，不会重复加手柄。
 - 保存仍走 §2.4 的「💾 保存并通知AI」按钮抓 `outerHTML`；编辑内容、`edited-cell`、inline 列宽/行高都会一并落盘。
 
-### 2.8 左下角「一键复制全文」（必做）
+### 2.8 左下角「一键复制全文」（必做 · 原型 iframe 自动转图片）
 
 > **目的：** 方便把整份 PRD 一键拷到钉钉/飞书/Word 等外部文档。复制必须是**富文本**（`text/html`，保留表格/标题/加粗/列表），并在导出前**剥离所有交互骨架与编辑痕迹**，否则粘出去会带一堆手柄、绿色高亮和 `contenteditable` 脏属性。
+>
+> **踩坑记录（v2.6 修正）：** 旧版直接 `iframe.remove()`，PRD 粘出去后**原型/流程图全部消失**，PM 每次都要手动重新截图再贴一遍。现固化为：复制前先把每个 iframe 通过本地导出服务换成 **base64 内联图片**，一次粘贴即完整。
 
-**① 按钮：** 页面**左下角**固定一个 `.copy-all-fab`（`position:fixed; left:28px; bottom:28px`），`onclick="copyAllContent()"`，文案「📋 一键复制全文」。与右下角 `.fab-group`（双栏/保存）分居两侧；双栏打开时右侧面板不影响左下角，无需偏移。另配一个 `.copy-toast`（左下、`bottom:80px`）做轻量结果反馈，默认 `opacity:0`、`.show` 时淡入，2 秒后自动隐藏。
+**① 按钮：** 页面**左下角**固定一个 `.copy-all-fab`（`position:fixed; left:28px; bottom:28px`），`onclick="copyAllContent()"`，文案「📋 一键复制全文」。与右下角 `.fab-group`（双栏/保存）分居两侧；双栏打开时右侧面板不影响左下角，无需偏移。另配一个 `.copy-toast`（左下、`bottom:80px`）做轻量结果反馈，默认 `opacity:0`、`.show` 时淡入，2 秒后自动隐藏。**取图期间 toast 常驻**（「正在生成原型图片 n/N…」），出结果后才进入 2 秒自动隐藏。
 
-**② 导出清洗（关键）：** `document.body.cloneNode(true)` 后，在副本上：
-- **删除交互骨架**：`.prototype-sidebar`、`.fab-group`、`.copy-all-fab`、`.copy-toast`、`.col-resizer`、`.row-resizer`、`.row-ctrl`、`.pm-anchor`、`.editable-table-remove`、`script`/`noscript`、以及 `iframe`（流程图/原型 iframe 粘不过去）。
-- **解包**：`.editable-table-wrap` 用其内部 `<table>` 替换自身。
-- **去编辑痕迹**：移除所有 `contenteditable`、`data-changed`/`data-original`/`data-orig`/`data-pm-tracked` 属性与 `.edited-cell` 类。
-- **补排版**：给 `table` 补 `border-collapse/width`、给 `th,td` 补 `1px` 边框+内边距、`th` 补浅底色（内联 style，确保粘到无样式环境也有框）；把 `img` 的 `src` 绝对化（`img.setAttribute('src', img.src)`）。
+**② 两类图都要内联成 base64（本节核心）：**
 
-**③ 写剪贴板：** 优先 `navigator.clipboard.write([new ClipboardItem({'text/html':blobHtml,'text/plain':blobText})])`（`text/plain` = 清洗后 `clone.innerText` 兜底）；不支持或被拒时**回退**到离屏 `contenteditable` 容器 + 选区 + `document.execCommand('copy')`。成功/失败都用 `.copy-toast` 提示。
+PRD 里的图有两种来源，**都得处理**，只处理 iframe 是不够的：
 
-**④ JS（已在无头 Chrome 实测：富文本含表格/加粗、骨架与编辑痕迹全无、内联边框、图片绝对化、纯文本兜底全绿，整段照贴）：**
+| 来源 | 形态 | 接口 |
+|---|---|---|
+| 活原型 / 流程图 | `<iframe src="../原型/x.html#p1">` | `POST /api/snapshot` → Playwright 渲染出 PNG |
+| 详细方案「原型」列的截图版 | `<img src="../原型截图/x.png">` | `POST /api/asset` → 直接读本地文件转 base64 |
+
+- **必须走本地导出服务**，理由与 §4.5 同源：`file://` 下浏览器既不能 `fetch` 本地 PNG、canvas 也会被跨源污染，**base64 只能由服务端下发**。禁止为此新造 `html2canvas` / `html-to-image` 前端截图路径。
+- PRD 底部引入 `<script src="../../scripts/prototype-export-client.js?v=YYYYMMDD-prd"></script>`（PRD 在 `[需求名]/需求文档/` 下，故是 `../../scripts/`），拿到 `window.snapshotPrototypeViaServer(src,{base})` 与 `window.inlineAssetViaServer(src,{base})`。
+- `/api/snapshot` 入参 `{src, base, scale?}` → 回 `{ok, dataUrl, cached, bytes}`。**取图策略＝缓存优先 + 自动重渲**：截图存在且比原型 HTML 新 → 直接复用 `[需求名]/原型截图/`（或 `流程图截图/`）里已有的 PNG；否则实时用 Playwright 只渲这一页再落盘。`scale` 默认 `2`（与整轮导出一致，保证同一份文档里图片清晰度统一），体积敏感时可传 `1`。
+- **服务端会自动适配四种 iframe**（不用 PRD 侧操心）：平铺原型的 `.device[id]`（按 hash 定位）、流程图的 `.chart-container`、单屏页（`.screen`/`.device`/`main`）、带 query 的片段（如 `?only=flow-main`，query 会原样带上并单独缓存）。
+- `/api/asset` 只放行 `png/jpg/jpeg/gif/webp/svg` 且必须落在项目目录内、单张 ≤12MB —— 它把文件原样吐成 base64，不能退化成任意文件读取。
+- **按 `src` 去重 + 页面内 `Map` 缓存**：同一份 PRD 里同一个 src 只取一次；同一次会话第二次复制直接秒出。
+
+**③ 三步走：剥骨架 → 取图 → 落图（顺序不能反）**
+
+1. **`stripSkeleton()`**：`document.body.cloneNode(true)` 后删掉 `.prototype-sidebar`、`.fab-group`、`.copy-all-fab`、`.copy-toast`、`.col-resizer`、`.row-resizer`、`.row-ctrl`、`.pm-anchor`、`.editable-table-remove`、`script`/`noscript`；`.editable-table-wrap` 用其内部 `<table>` 替换自身。**iframe/img 此时先留着。**
+2. **`collectMedia(clone)`**：**只扫 clone 里活下来的节点**去取图。
+   > **踩坑（必须照做）：** 早期版本按 `document` 扫 iframe，把 §2.6 右侧双栏预览的 `#prototypeFrame` 也算了进去——它随 `.prototype-sidebar` 一起被删了，结果**白渲一张图、toast 还多报一张**（说"3 张"实际只贴出 2 张）。按 clone 扫天然规避。
+   > **踩坑 2（同样必须照做）：** 页面 CSS 全在 `<head>` 里，`document.body.cloneNode(true)` **带不走**，`.proto-shot` 那类尺寸约束会整个丢失，1200px 的截图直接把表格撑爆、描述列被挤成"一行一个字"。所以 `stripSkeleton()` 要**趁 clone 与实时 DOM 还一一对应**（删节点之前，两边 `querySelectorAll('img')` 索引一致），把每张图的实际显示宽度 `getBoundingClientRect().width` 固化成内联 `width` + `max-width:100%`。
+3. **`finalizeClone(clone, jobs)`**：iframe 换成 `<img src="data:image/png;base64,…">`（失败的才删）、本地 `<img>` 的 `src` 换成 dataUrl（失败的保留原样）；再移除 `contenteditable`、`data-changed`/`data-original`/`data-orig`/`data-pm-tracked` 与 `.edited-cell`；给 `table` 补 `border-collapse/width`、`th,td` 补 `1px` 边框+内边距、`th` 补浅底色（内联 style，确保粘到无样式环境也有框）；最后把 `img` 的 `src` 绝对化——**`data:` 开头的要跳过**，否则会把 base64 改坏。
+
+**④ 三档降级（必须据实告知，不许静默失败）：**
+
+| 情况 | 行为 | toast 文案 |
+|---|---|---|
+| 全部取图成功 | iframe 换成图、本地 img 内联 | `已复制全文（含 N 张图），可直接粘贴到钉钉/飞书/Word` |
+| 部分失败 | 失败的 iframe 删掉、失败的 img 保留原样 | `已复制全文，含 N 张图，M 张生成失败已跳过` |
+| 服务整体不可用 | 退回旧行为（删所有 iframe、img 留本地路径） | `导出服务未启动，已按纯文本复制（原型图缺失）` |
+
+**⑤ 体积控制（不做会直接失败）：** 服务下发的是 `scale=2` 的交付级 PNG，单张能到 3MB —— 一份含 3 个 iframe + 8 张原型截图的真实 PRD 实测**原始合计约 19.5MB**，转 base64 后 26MB，远超各家文档粘贴能吃下的量。故取到 dataUrl 后**在 PRD 页面本地降采样**：宽度上限 `MAX_IMG_WIDTH = 2000`，超出的按比例缩到 2000px 宽再以 `image/jpeg`（质量 0.9）重编码，先铺白底再画（JPEG 无透明通道）。
+- **为什么可以在前端做**：`data:` URL 属同源，**不会污染 canvas**——被 `file://` 封死的只有"读本地文件"，不是"处理已经拿到手的 base64"。所以服务只负责突破 `file://` 的读取限制，缩放留在浏览器，无需任何图像库。
+- 缩放失败（`onerror`/`toDataURL` 抛错）**一律退回原图**，绝不因为压缩失败就丢图。
+- **粘出去「发虚」是降采样造成的，不是 JPEG 造成的（v2.8 实测，别改错地方）：** 上限曾定在 1200 + 质量 0.85，PM 反馈粘进文档发虚。同一素材同一区域四档对照 —— JPEG .85 / JPEG .95 / PNG 无损 / WebP .92，**都缩到 1200 后几乎无差别**，而不降采样的原图明显锐利。细节是在缩放那一步丢的，换编码格式救不回来，唯一有效的是抬高 `MAX_IMG_WIDTH`。9 张素材实测合计：`1200/.85 = 0.90MB`、`1600/.9 = 1.65MB`、`2000/.9 = 2.20MB`、`2880 原尺寸/.9 = 3.60MB`；取 **2000** 是清晰度与体积的拐点。
+- **别用「贴出来看着还行」判断够不够。** 图在文档里的显示宽度由 ④ 固化的表格列宽决定（实测 335px），**这个尺寸下 1200 和 2880 肉眼无差别**，差异只在读者放大看细节时暴露。验收要放大到 1000px 以上再看。
+- 再要更清晰只能继续调大 `MAX_IMG_WIDTH`，代价是体积近似平方级上升；**WebP 体积更优（`2000/.9` 仅 1.34MB）但钉钉/飞书/Word 对剪贴板内 base64 WebP 的支持未实测，不要默认切过去**。
+
+**⑥ 写剪贴板：** 优先 `navigator.clipboard.write([new ClipboardItem({'text/html':blobHtml,'text/plain':blobText})])`（`text/plain` = 清洗后 `clone.innerText` 兜底）；不支持或被拒时**回退**到离屏 `contenteditable` 容器 + 选区 + `document.execCommand('copy')`。成功/失败都用 `.copy-toast` 提示。
+
+**⑦ JS（整段照贴到 PRD 底部，须在 `prototype-export-client.js` 之后）：**
 ```js
 (function(){
-  function buildExportClone(){
+  var mediaCache = new Map();   // src → dataUrl，同一次会话复用（iframe 与 img 共用）
+  var MAX_IMG_WIDTH = 2000;     // 粘出去的图片宽度上限，见 ⑤ 体积控制（1200 会让放大看时发虚）
+
+  // 服务下发的是 2 倍图（一张能到 3MB），直接塞剪贴板会几十 MB。
+  // data: URL 不会污染 canvas，所以缩放可以在本页做完，不用再依赖任何图像库。
+  function shrinkDataUrl(dataUrl, maxWidth){
+    return new Promise(function(resolve){
+      var im = new Image();
+      im.onload = function(){
+        if(!im.naturalWidth || im.naturalWidth <= maxWidth){ resolve(dataUrl); return; }
+        try{
+          var r = maxWidth / im.naturalWidth;
+          var c = document.createElement('canvas');
+          c.width = Math.round(im.naturalWidth * r);
+          c.height = Math.round(im.naturalHeight * r);
+          var ctx = c.getContext('2d');
+          ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);  // JPEG 没有透明通道，先铺白底
+          ctx.drawImage(im, 0, 0, c.width, c.height);
+          resolve(c.toDataURL('image/jpeg', 0.9));
+        }catch(e){ resolve(dataUrl); }   // 缩放失败就用原图，不能因此丢图
+      };
+      im.onerror = function(){ resolve(dataUrl); };
+      im.src = dataUrl;
+    });
+  }
+
+  // ① 先剥交互骨架，iframe/img 都先留着
+  function stripSkeleton(){
     var clone = document.body.cloneNode(true);
+    // 页面 CSS 在 <head> 里，克隆 body 带不走 → 原型列截图会按 1200px 原图把表格撑爆、
+    // 描述列被挤成一行一个字。趁 clone 与实时 DOM 还一一对应，把实际显示宽度固化成内联样式。
+    var live = document.body.querySelectorAll('img'), copies = clone.querySelectorAll('img');
+    for(var i=0; i<live.length && i<copies.length; i++){
+      var w = Math.round(live[i].getBoundingClientRect().width);
+      if(w > 0){ copies[i].style.width = w + 'px'; copies[i].style.height = 'auto'; }
+      copies[i].style.maxWidth = '100%';
+    }
     clone.querySelectorAll('.prototype-sidebar, .fab-group, .copy-all-fab, .copy-toast, .col-resizer, .row-resizer, .row-ctrl, .pm-anchor, .editable-table-remove, script, noscript').forEach(function(n){ n.remove(); });
     clone.querySelectorAll('.editable-table-wrap').forEach(function(w){ var t=w.querySelector('table'); if(t) w.replaceWith(t); else w.remove(); });
-    clone.querySelectorAll('iframe').forEach(function(f){ f.remove(); });
+    return clone;
+  }
+
+  // ② 只扫 clone 里活下来的节点，逐个取 base64
+  async function collectMedia(clone){
+    var jobs = [];
+    clone.querySelectorAll('iframe[src]').forEach(function(el){
+      jobs.push({ el: el, src: el.getAttribute('src'), kind: 'frame' });
+    });
+    clone.querySelectorAll('img[src]').forEach(function(el){
+      var s = el.getAttribute('src');
+      if(s && !/^data:/i.test(s)) jobs.push({ el: el, src: s, kind: 'asset' });
+    });
+
+    var out = { ok:0, fail:0, serviceDown:false, jobs: jobs };
+    if(!jobs.length) return out;
+    if(typeof window.snapshotPrototypeViaServer !== 'function' || typeof window.inlineAssetViaServer !== 'function'){
+      out.serviceDown = true; out.fail = jobs.length; return out;
+    }
+
+    var srcs = [];
+    jobs.forEach(function(j){ if(srcs.indexOf(j.src) === -1) srcs.push(j.src); });
+
+    // 先把"服务在不在"一次性问清楚，再逐张取图。
+    // 别靠嗅探第一张的报错文案来判断服务死活——那既不准，又会让每张图都白等一遍探测。
+    // 这一步最慢：8765 探测 8s + 唤起 launcher + 等 Chromium 冷启动最多 30s，实测服务确实没起时约 39s，
+    // 所以必须挂常驻 toast 说明在等什么，不能让用户对着不动的界面猜。
+    if(mediaCache.size < srcs.length){
+      showToast('正在唤起原型导出服务（首次启动较慢，最长约 40 秒）…', false, true);
+      try{
+        await window.ensureExportServerReady();
+      }catch(e){
+        console.warn('[copy-all] 导出服务不可用', e);
+        out.serviceDown = true; out.fail = srcs.length; return out;
+      }
+    }
+
+    for(var i=0;i<srcs.length;i++){
+      var src = srcs[i];
+      if(mediaCache.has(src)){ out.ok++; continue; }
+      showToast('正在生成图片 '+(i+1)+'/'+srcs.length+'…', false, true);
+      var kind = jobs.filter(function(j){ return j.src === src; })[0].kind;
+      try{
+        var data = kind === 'frame'
+          ? await window.snapshotPrototypeViaServer(src, {})
+          : await window.inlineAssetViaServer(src, {});
+        mediaCache.set(src, await shrinkDataUrl(data.dataUrl, MAX_IMG_WIDTH)); out.ok++;
+      }catch(e){
+        console.warn('[copy-all] 取图失败', src, e);
+        out.fail++;   // 单张失败不影响其余，最后由 toast 如实报数
+      }
+    }
+    return out;
+  }
+
+  // ③ 落图 + 清编辑痕迹 + 补排版
+  function finalizeClone(clone, jobs){
+    (jobs||[]).forEach(function(j){
+      var url = mediaCache.get(j.src);
+      if(j.kind === 'frame'){
+        if(!url){ j.el.remove(); return; }              // 原型取图失败 → 退回删除
+        var img = document.createElement('img');
+        img.src = url;
+        img.alt = j.el.getAttribute('title') || '原型预览';
+        img.style.cssText = 'max-width:100%;height:auto;border:1px solid #e5e3f5;border-radius:8px;';
+        j.el.replaceWith(img);
+      } else if(url){
+        j.el.setAttribute('src', url);                  // 截图内联失败 → 保留原样，由 toast 如实报数
+      }
+    });
     clone.querySelectorAll('[contenteditable]').forEach(function(el){ el.removeAttribute('contenteditable'); });
     ['data-changed','data-original','data-orig','data-pm-tracked'].forEach(function(a){ clone.querySelectorAll('['+a+']').forEach(function(el){ el.removeAttribute(a); }); });
     clone.querySelectorAll('.edited-cell').forEach(function(el){ el.classList.remove('edited-cell'); });
     clone.querySelectorAll('table').forEach(function(t){ t.style.borderCollapse='collapse'; t.style.width='100%'; });
     clone.querySelectorAll('th,td').forEach(function(c){ c.style.border='1px solid #ccc'; c.style.padding='6px 10px'; c.style.verticalAlign='top'; });
     clone.querySelectorAll('th').forEach(function(c){ if(!c.style.background) c.style.background='#f2f1f8'; });
-    clone.querySelectorAll('img').forEach(function(img){ try{ img.setAttribute('src', img.src); }catch(e){} });
+    clone.querySelectorAll('img').forEach(function(img){
+      try{ if(!/^data:/i.test(img.getAttribute('src')||'')) img.setAttribute('src', img.src); }catch(e){}
+    });
     return clone;
   }
-  function showToast(msg, err){
+
+  function showToast(msg, err, sticky){
     var t=document.querySelector('.copy-toast');
     if(!t){ t=document.createElement('div'); t.className='copy-toast'; document.body.appendChild(t); }
     t.textContent=msg; t.style.background= err? '#c0392b' : '#2a2459'; t.classList.add('show');
-    clearTimeout(showToast._t); showToast._t=setTimeout(function(){ t.classList.remove('show'); }, 2200);
+    clearTimeout(showToast._t);
+    if(!sticky) showToast._t=setTimeout(function(){ t.classList.remove('show'); }, 2600);
   }
-  async function copyAllContent(){
-    var clone=buildExportClone();
-    var html='<meta charset="utf-8">'+clone.innerHTML;
-    var text=clone.innerText;
+
+  async function writeClipboard(html, text){
     try{
       if(navigator.clipboard && window.ClipboardItem){
         await navigator.clipboard.write([new ClipboardItem({
           'text/html': new Blob([html],{type:'text/html'}),
           'text/plain': new Blob([text],{type:'text/plain'})
         })]);
-        showToast('已复制全文，可直接粘贴到钉钉/飞书/Word'); return;
+        return true;
       }
       throw new Error('no async clipboard');
     }catch(e){
-      try{
-        var holder=document.createElement('div'); holder.setAttribute('contenteditable','true');
-        holder.style.cssText='position:fixed;left:-99999px;top:0;opacity:0;'; holder.innerHTML=html;
-        document.body.appendChild(holder);
-        var range=document.createRange(); range.selectNodeContents(holder);
-        var sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
-        var okc=document.execCommand('copy'); sel.removeAllRanges(); holder.remove();
-        if(okc){ showToast('已复制全文，可直接粘贴到钉钉/飞书/Word'); } else { throw new Error('execCommand 拒绝'); }
-      }catch(e2){ showToast('复制失败，请手动全选复制：'+(e2.message||e2), true); }
+      var holder=document.createElement('div'); holder.setAttribute('contenteditable','true');
+      holder.style.cssText='position:fixed;left:-99999px;top:0;opacity:0;'; holder.innerHTML=html;
+      document.body.appendChild(holder);
+      var range=document.createRange(); range.selectNodeContents(holder);
+      var sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+      var okc=document.execCommand('copy'); sel.removeAllRanges(); holder.remove();
+      if(!okc) throw new Error('execCommand 拒绝');
+      return true;
+    }
+  }
+
+  async function copyAllContent(){
+    try{
+      var clone = stripSkeleton();
+      var media = await collectMedia(clone);
+      finalizeClone(clone, media.jobs);
+      await writeClipboard('<meta charset="utf-8">'+clone.innerHTML, clone.innerText);
+      if(media.serviceDown)     showToast('导出服务未启动，已按纯文本复制（原型图缺失）', true);
+      else if(media.fail)       showToast('已复制全文，含 '+media.ok+' 张图，'+media.fail+' 张生成失败已跳过', true);
+      else if(media.ok)         showToast('已复制全文（含 '+media.ok+' 张图），可直接粘贴到钉钉/飞书/Word');
+      else                      showToast('已复制全文，可直接粘贴到钉钉/飞书/Word');
+    }catch(e){
+      showToast('复制失败，请手动全选复制：'+(e.message||e), true);
     }
   }
   window.copyAllContent=copyAllContent;
 })();
 ```
 
-**⑤ CSS 草图：**
+**⑧ CSS 草图：**
 ```css
 .copy-all-fab { position:fixed; left:28px; bottom:28px; z-index:1001; background:#fff; color:#3b357a; border:1px solid #d8d4f0; border-radius:12px; padding:13px 20px; font-size:14px; font-weight:700; cursor:pointer; box-shadow:0 4px 16px rgba(91,91,214,.18); display:flex; align-items:center; gap:8px; }
 .copy-all-fab:hover { transform:translateY(-2px); border-color:#5b5bd6; }
@@ -516,7 +728,27 @@ body.col-resizing { cursor:col-resize !important; } body.row-resizing { cursor:r
 .copy-toast.show { opacity:1; transform:translateY(0); }
 ```
 
-> **取材限制（据实说明，勿夸大）：** 本地相对路径的截图/iframe 粘到钉钉云文档时通常不会自动上传，复制以**文本+表格结构**为主；图片可能需要在目标文档里重新插入。
+> **取材限制（据实说明，勿夸大）：**
+> - base64 内联图**不依赖本地路径**，这正是必须走服务出 base64、而不是贴相对路径 `<img>` 的原因。
+> - 但**目标文档是否真的会把 base64 图存下来，取决于它自己的粘贴实现**——钉钉/飞书/Word 各不相同，首次接入某个目标文档时**必须人工粘一次确认**，不要向用户承诺"一定能带图"。
+> - **耗时实测**（AI口述题 PRD，2 个 iframe + 8 张原型截图）：截图已存在时**全程 0.7 秒**（10 张全部命中缓存）；服务没起、需要唤起并冷启动 Chromium 时最长约 **40 秒**；确认服务起不来时也是这个量级才出降级提示——所以那句常驻 toast 不能省。
+> - 复制出的富文本约 **3.8MB**（10 张图解码后 2.83MB，base64 文本再膨胀 1.33×；原始素材 19.5MB，经 ⑤ 降采样）。**报体积给用户时要报剪贴板里的 base64 量，不是解码后的字节数**——两者差 1/3，按后者承诺会低估。
+
+---
+
+### 2.9 内网（http · 不安全上下文）下的真实边界（必须如实告知用户，不许含糊）
+
+PRD HTML 会被推到公司内网供多人浏览。内网是 `http://` 非 localhost，属**不安全上下文**——`navigator.clipboard`、`ClipboardItem`、`showSaveFilePicker` 一律不存在。不要按"我本机点着好使"就当功能可用。
+
+| 能力 | 作者本机（`file://`） | 内网访客（`http://` 非 localhost） |
+|---|---|---|
+| `💾 保存并通知AI` | ✅ 覆写本地文件 | ⚠️ 无 File System Access → 降级为**下载一份副本** |
+| `📋 一键复制全文` | ✅ | ✅ 但 `navigator.clipboard` 在不安全上下文不存在，**必须有 `execCommand` 兜底**否则整个复制哑火 |
+| 原型取图（`/api/snapshot`、`/api/asset`） | ✅ | ✅ 但服务端要按项目目录相对解析发起页，见下面这条踩坑 |
+
+> **踩坑（v2.7 修正）：** 内网用 http 打开时 `location.pathname` 是**站点根路径**、磁盘上并不存在，导出服务旧版只按绝对路径解析发起页，导致 `/api/snapshot` 与 `/api/asset` 全返 400、「一键复制全文」**一张图都取不到**（toast 还只说"生成失败"）。服务端 `_resolve_base_html()` 必须**再按项目目录相对解一次**。
+
+> 任何一档降级都要在 toast 里讲清楚丢了什么（§2.8 降级三档），不许静默失败。
 
 ---
 
@@ -533,6 +765,10 @@ body.col-resizing { cursor:col-resize !important; } body.row-resizing { cursor:r
 4. 技术栈：**Tailwind CSS + Font Awesome**（CDN引入），无需构建工具
 5. **极度重要（真实渲染导出）：** 页面内建悬浮导出按钮 `📸 一键导出所有截图`，仅在平铺模式下显示；按钮必须接入 `../scripts/prototype-export-client.js`，优先调用本地 `scripts/prototype_server.py`，用 Playwright/Chromium 对真实 HTML 渲染结果截图，不再用 `html-to-image` / `html2canvas` 作为默认导出方案。
 6. **极度重要（保存路径与命名）：** 导出 PNG 自动保存到该需求自己的目录 `[需求名]/原型截图/`（由导出服务根据原型 HTML 所在位置自动推导）；文件名优先使用原型下方 `.device-label`，其次使用 `.page-title` / 注释中的界面名称，保证和界面名称一致。
+   > **极度重要（截图目录是 PM 的资产目录，不许通配符清场）：** 每轮导出前清理上一轮产物时，**只能删本 HTML 在 `.export-manifest.json` 里登记过的文件名**，绝不能用 `*.png` 把整个 `原型截图/` 清空。
+   > **实测踩过（删了 8 张补 1 张）：** `原型截图/` 里同时躺着 PM 手工产物 —— 用 `[需求名]-shots.html`（状态可寻址的截图版）按 hash 一个状态一张手截、手工命名（`01-章节详情页.png`…），PRD 的「原型」列直接 `<img>` 引这些名字。而对 `[需求名]-prototype.html` 跑一次导出时，它本身没有 `.device` 节点、只出 1 张整页图，`*.png` 却把那 8 张全删了，PRD 当场变一片碎图，且**这些图不在 git 里，删了就没了**。
+
+
 7. **极度重要（导出服务）：** 项目根目录提供 `启动原型导出服务.command`。初始化时会尝试安装 macOS LaunchAgent watcher；点击导出按钮时若 `localhost:8765` 暂未响应，按钮需显示“正在连接导出服务”，并提示用户双击 `.command` 或等待 watcher 拉起服务。浏览器安全限制下，HTML 不能直接启动 Python 进程。
 8. 同时保留 `trigger-export` 的 `postMessage` 监听，以兼容 iframe 嵌入场景；无 hash 时 body 加 `.tiled` class 平铺展示所有 `.device`，有 hash 时只显示对应单页。
 9. **极度重要（单页模式 CSS 陷阱）：** 单页模式下**禁止**对 `.gallery` 等包裹容器设置 `display: none`，否则内部 `.device` 即使有 `!important` 也不会显示（CSS 继承：父隐藏则子不可见）。正确做法：保持 `.gallery` 为 `display: block`，隐藏每个 `.device-wrapper`，仅对 `.device-wrapper.active` 设置 `display: flex`。JS init 中通过 `device.closest('.device-wrapper')` 找到父容器加 `active` 类。
@@ -1076,6 +1312,9 @@ const EDGES = [
 - [ ] ★ 描述列按 §2.3.1 分块结构组织：【页面元素】【交互说明】必出、按需块不硬凑，且全文**无任何技术接口表述**
 - [ ] ★ 每个功能行对应的原型列已嵌入iframe（无双边框白边）
 - [ ] ★ 原型中所有文案/数据/状态 与 PRD「详细方案」描述列完全一致（已通过 3.6 自查）
+- [ ] ★ 「📋 一键复制全文」实测粘贴一次：原型 iframe 已变成图片（或服务未启动时**如实提示**了「原型图缺失」，不是静默丢图）——见 §2.8
+- [ ] ★ 粘出去的图**放大到 1000px 以上**再看一眼是否清晰——按文档里的默认显示尺寸（约 335px）看，任何分辨率都一样，糊不糊在这个尺寸下根本看不出来。见 §2.8 ⑤
+- [ ] ★ 双栏预览的 `－/百分比/＋/适配` 可用：放大后 `.device-shell` 出滚动条、「适配」能回正、切页后缩放模式保持——见 §2.6 ⑨
 - [ ] （若保留流程图）流程图正常渲染（无Syntax error）；若省略则确认未残留空的流程图 iframe
 - [ ] （若保留时序图）为**源码文本块**（非渲染图）且复制按钮可用、源码经 Mermaid 环境验证无 Syntax error、分支与推进条件与详细方案【功能逻辑】/【边界说明】口径一致、技术字段仅出现在本章（§4.7 自检）
 - [ ] （若保留交互流程图）节点覆盖全部核心界面与状态变体、箭头标签与描述列【交互说明】逐条对应、状态机图例齐全、导出走本地服务（§4.6 自检）
@@ -1108,7 +1347,7 @@ const EDGES = [
 | 13 | 附录 · 决策对齐表 | 是否新增决策项 |
 | 14 | 附录 · 产品风格定位 | 是否影响文案风格 |
 | 15 | 原型文件（.html） | 新增页面 + 更新 `pages` 数组 + **逐页检查文案/数据/状态是否与 PRD 描述一致（参照 3.6 节）** |
-| 16 | PRD 双栏预览下拉项 + 滚动联动 | 新增页的 `CATALOG` 项 / `#pageSelect` option，并给对应「一级模块」单元格补 `data-preview=<value>`（见 2.6 ⑧ scroll-spy） |
+| 16 | PRD 双栏预览下拉项 + 滚动联动 + 复制出图 | 新增页的 `CATALOG` 项 / `#pageSelect` option，并给对应「一级模块」单元格补 `data-preview=<value>`（见 2.6 ⑧ scroll-spy）；**并确认该页能被 `/api/snapshot` 取到图**（起服务后点一次「一键复制全文」，看 toast 有没有报"生成失败"），否则复制出去会缺这张原型（见 §2.8） |
 | 17 | PRD 的页面映射（如 `pageAliases`、端侧页面集合、预览状态） | 新增页或删除端侧时需同步 |
 
 > **裁剪章节的处理：** 上表第 4/5/6/9/10/11/12/13/14 项对应的章节可能在初稿时已按 2.2 裁掉。遍历到这些位置时：

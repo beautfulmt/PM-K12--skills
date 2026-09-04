@@ -171,6 +171,62 @@
     }
   }
 
+  // ── 单页取图：给 PRD「一键复制全文」把原型 iframe 换成 base64 图片 ──────────
+  // file:// 下浏览器既不能 fetch 本地 PNG、canvas 也会被污染，base64 只能由本地服务下发。
+  var readyPromise = null;
+
+  function ensureExportServerReady() {
+    // 并发取多页时只做一次唤起/等待；失败后允许下次点击重试
+    if (!readyPromise) {
+      readyPromise = waitForServerReady(null).catch(function (error) {
+        readyPromise = null;
+        throw error;
+      });
+    }
+    return readyPromise;
+  }
+
+  async function snapshotPrototypeViaServer(src, opts) {
+    if (!src) throw new Error('缺少 iframe src');
+    opts = opts || {};
+    await ensureExportServerReady();
+
+    var response = await fetch(SERVER + '/api/snapshot', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        src: src,
+        base: opts.base || currentHtmlPath(),
+        scale: opts.scale
+      })
+    });
+
+    var data = await response.json().catch(function () { return {}; });
+    if (!response.ok || !data.ok || !data.dataUrl) {
+      throw new Error(data.error || ('取图失败（HTTP ' + response.status + '）'));
+    }
+    return data;
+  }
+
+  // 本地 <img>（详细方案「原型」列的截图版）→ base64，同样只能由服务下发
+  async function inlineAssetViaServer(src, opts) {
+    if (!src) throw new Error('缺少 img src');
+    opts = opts || {};
+    await ensureExportServerReady();
+
+    var response = await fetch(SERVER + '/api/asset', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ src: src, base: opts.base || currentHtmlPath() })
+    });
+
+    var data = await response.json().catch(function () { return {}; });
+    if (!response.ok || !data.ok || !data.dataUrl) {
+      throw new Error(data.error || ('内联图片失败（HTTP ' + response.status + '）'));
+    }
+    return data;
+  }
+
   document.addEventListener('click', function (event) {
     var button = isExportButton(event.target);
     if (!button) return;
@@ -189,4 +245,7 @@
   }, true);
 
   window.exportPrototypeViaServer = exportViaServer;
+  window.snapshotPrototypeViaServer = snapshotPrototypeViaServer;
+  window.inlineAssetViaServer = inlineAssetViaServer;
+  window.ensureExportServerReady = ensureExportServerReady;
 })();
