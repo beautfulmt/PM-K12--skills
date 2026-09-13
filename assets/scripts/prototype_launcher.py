@@ -29,7 +29,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import pm_launchagent  # noqa: E402
 from pm_bootstrap import ensure_serving  # noqa: E402
 from pm_launchagent import IDLE_EXIT_SECONDS, SOCKET_NAME  # noqa: E402
-from pm_runtime import ensure_config, origin_allowed, probe_health, valid_token  # noqa: E402
+from pm_runtime import cors_response_origin, ensure_config, origin_allowed, probe_health, valid_token  # noqa: E402
 
 PROJECT_DIR = Path(os.environ.get("PROTOTYPE_PROJECT_DIR")
                    or Path(__file__).resolve().parent.parent).resolve()
@@ -64,7 +64,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(code)
         origin = self.headers.get("Origin")
         if origin and config and self.allowed_origin(config):
-            self.send_header("Access-Control-Allow-Origin", origin)
+            self.send_header("Access-Control-Allow-Origin", cors_response_origin(origin))
         self.send_header("Access-Control-Allow-Headers", "Content-Type, X-PM-Project, X-PM-Token")
         self.send_header("Access-Control-Allow-Methods", "POST, OPTIONS")
         self.send_header("Cache-Control", "no-store")

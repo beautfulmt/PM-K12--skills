@@ -163,7 +163,24 @@ def probe_health(port, timeout=1.5):
 
 
 def origin_allowed(origin, port):
-    return origin in (None, "null", "http://127.0.0.1:" + str(port), "http://localhost:" + str(port))
+    # Chrome can serialize a request from a local file page as the loopback
+    # site origin without the service port.
+    return origin in (
+        None,
+        "null",
+        "http://127.0.0.1",
+        "http://localhost",
+        "http://127.0.0.1:" + str(port),
+        "http://localhost:" + str(port),
+    )
+
+
+def cors_response_origin(origin):
+    # Chrome reports local file pages as an opaque null origin while sending
+    # the loopback site origin in the HTTP request header.
+    if origin in ("http://127.0.0.1", "http://localhost"):
+        return "null"
+    return origin
 
 
 def valid_token(headers, config):

@@ -36,8 +36,8 @@ from urllib.parse import quote, unquote, urlparse
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from pm_bootstrap import launch_engine  # noqa: E402
-from pm_runtime import (VERSION, atomic_write, ensure_config, origin_allowed,  # noqa: E402
-                        probe_health, reroll_ports, valid_token)
+from pm_runtime import (VERSION, atomic_write, cors_response_origin, ensure_config,  # noqa: E402
+                        origin_allowed, probe_health, reroll_ports, valid_token)
 
 
 PROJECT_DIR = Path(os.environ.get("PROTOTYPE_PROJECT_DIR")
@@ -954,10 +954,22 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):
         print(f"  [{time.strftime('%H:%M:%S')}] {fmt % args}")
 
+    def _local_referer(self):
+        raw = self.headers.get("Referer", "")
+        if not raw:
+            return False
+        try:
+            parsed = urlparse(raw)
+            return (parsed.scheme == "http"
+                    and parsed.hostname in {"127.0.0.1", "localhost"}
+                    and parsed.port == PORT)
+        except (TypeError, ValueError):
+            return False
+
     def _cors(self):
         origin = self.headers.get("Origin")
         if origin_allowed(origin, PORT) and origin:
-            self.send_header("Access-Control-Allow-Origin", origin)
+            self.send_header("Access-Control-Allow-Origin", cors_response_origin(origin))
         self.send_header("Vary", "Origin")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type, X-PM-Token, X-PM-Project")
@@ -1208,7 +1220,8 @@ class Handler(BaseHTTPRequestHandler):
             self._json({"error": "来源不允许"}, 403)
             return
         if file_path.name == "pm-runtime-config.js":
-            if self.headers.get("Sec-Fetch-Site") not in (None, "same-origin", "none"):
+            if (self.headers.get("Sec-Fetch-Site") not in (None, "same-origin", "none")
+                    and not self._local_referer()):
                 self._json({"error": "配置仅供当前项目页面使用"}, 403)
                 return
             if READ_ONLY:
